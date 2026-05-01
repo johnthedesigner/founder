@@ -1,0 +1,23 @@
+{
+  "name": "ds-gen",
+  "version": "0.0.0",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "backend",
+    "frontend",
+    "preview-sandbox",
+    "cli"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "typecheck": "tsc --noEmit -p packages/types/tsconfig.json && tsc --noEmit -p backend/tsconfig.json"
+  },
+  "devDependencies": {
+    "typescript": "^5.7.2",
+    "eslint": "^9.15.0",
+    "typescript-eslint": "^8.15.0",
+    "prettier": "^3.4.2"
+  }
+}

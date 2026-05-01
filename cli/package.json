@@ -1,0 +1,11 @@
+{
+  "name": "@ds-gen/cli",
+  "version": "0.0.0",
+  "bin": {
+    "ds-gen": "src/index.ts"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit"
+  }
+}
