@@ -16,8 +16,8 @@ The generation pipeline is fully functional and tested before any API, database,
 
 ### Task 0.1 — Types and defaults
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** None
 
 **What this task implements:**
