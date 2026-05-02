@@ -1,6 +1,6 @@
 # Phase 0 — Pipeline Foundation
 
-> **Status:** Not started
+> **Status:** In progress
 > **Depends on:** Nothing. This is the first phase.
 > **Reference:** `docs/design-system-dev-plan.md` § Phase 0 — Pipeline Foundation
 
@@ -51,8 +51,8 @@ The shared type definitions for the entire project (`ProjectConfig` and all sub-
 
 ### Task 0.2 — Color scale generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.1
 
 **What this task implements:**
@@ -86,8 +86,8 @@ The `generateColorScale` function in `backend/src/pipeline/palette/generator.ts`
 
 ### Task 0.3 — WCAG contrast validation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.1
 
 **What this task implements:**
@@ -120,8 +120,8 @@ The accessibility validation utilities in `backend/src/pipeline/tokens/accessibi
 
 ### Task 0.4 — Primitive token generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Tasks 0.2 and 0.3
 
 **What this task implements:**
@@ -158,8 +158,8 @@ The `generatePrimitives` function in `backend/src/pipeline/tokens/primitives.ts`
 
 ### Task 0.5 — Semantic token generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.4
 
 **What this task implements:**
@@ -192,8 +192,8 @@ The `generateSemanticTokens` function in `backend/src/pipeline/tokens/semantic.t
 
 ### Task 0.6 — Component token generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.5
 
 **What this task implements:**
@@ -225,8 +225,8 @@ The `generateComponentTokens` function in `backend/src/pipeline/tokens/component
 
 ### Task 0.7 — Component code generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.6
 
 **What this task implements:**
@@ -267,8 +267,8 @@ The component code generators in `backend/src/pipeline/components/`. Each genera
 
 ### Task 0.8 — Documentation generation
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.7
 
 **What this task implements:**
@@ -304,8 +304,8 @@ The documentation generators in `backend/src/pipeline/docs/`. Each generator is 
 
 ### Task 0.9 — Export serialization
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-01
 > **Depends on:** Task 0.8
 
 **What this task implements:**
