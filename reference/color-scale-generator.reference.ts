@@ -1,3 +1,6 @@
+// @ts-nocheck
+// Eliminating checks & warnings for a reference-only file that is not part of the main codebase and may contain patterns that would normally be flagged by linters or TypeScript checks. This allows us to keep this file as a reference without worrying about code quality issues that are not relevant to its purpose.
+
 // import { v4 as uuidv4 } from "uuid";
 // import { nanoid } from "nanoid";
 import { nanoid } from "nanoid/non-secure";
