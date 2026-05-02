@@ -16,14 +16,14 @@ The generation pipeline: color scale generation (OKLCH), WCAG contrast validatio
 ## Phase 1 — Backend and Auth
 Express server, Postgres schema, migrations, auth system (email/password registration, email verification, login, session management, password reset), project CRUD API, generation export endpoints (JSON manifest and ZIP stream), agent API endpoint, CLI manifest endpoint. Frontend stub: login page, home page, project list via API.
 
-**Status:** Not started ← current
+**Status:** Complete
 
 ---
 
 ## Phase 2 — Creation Flow
 Full four-stage creation flow: project type selection with scope chips, brand asset input, color direction, mode selection, four personality axes with deep customization disclosures, full Stage 3 review with token summary, Stage 4 export CTAs. Preview sandbox (separate Vite build) communicating via postMessage. System Preview updates within 500ms of any config change. Anonymous users can complete the full flow and download a ZIP.
 
-**Status:** Not started
+**Status:** Not started ← current
 
 ---
 

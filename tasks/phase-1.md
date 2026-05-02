@@ -1,6 +1,6 @@
 # Phase 1 — Backend and Auth
 
-> **Status:** Not started
+> **Status:** In progress
 > **Depends on:** Phase 0 — Pipeline Foundation (complete)
 > **Reference:** `docs/design-system-dev-plan.md` § Phase 1 — Backend and Auth
 
@@ -18,7 +18,8 @@ At the end of this phase: all API routes are implemented and tested, the databas
 
 ### Task 1.1 — Express server and environment setup
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-02
 > **Depends on:** None (Phase 1 starting point)
 
 **What this task implements:**
@@ -33,11 +34,11 @@ The Express application scaffold: `app.ts` (middleware, route mounting), `server
 - `backend/tsconfig.json` — Ensure `outDir`, `rootDir`, and `include` are correct for src/ (no changes if already correct)
 
 **Acceptance criteria:**
-- [ ] `GET /health` returns `{ status: 'ok' }` with HTTP 200 (database check is `'pending'` until Task 1.2 adds the connection)
-- [ ] Server starts without error when `npm run dev` is run with valid env vars
-- [ ] `tsc --noEmit` passes with zero errors
-- [ ] `eslint src` passes with zero errors
-- [ ] `SESSION_LOG.md` updated
+- [x] `GET /health` returns `{ status: 'ok' }` with HTTP 200 (database check is `'pending'` until Task 1.2 adds the connection)
+- [x] Server starts without error when `npm run dev` is run with valid env vars
+- [x] `tsc --noEmit` passes with zero errors
+- [x] `eslint src` passes with zero errors
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not add any database connection logic — that's Task 1.2
@@ -47,7 +48,8 @@ The Express application scaffold: `app.ts` (middleware, route mounting), `server
 
 ### Task 1.2 — Database setup and migrations
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-02
 > **Depends on:** Task 1.1
 
 **What this task implements:**
@@ -71,13 +73,13 @@ All indexes from the schema must be included.
 - `backend/.env.example` — Already created in 1.1; ensure `DATABASE_URL` and `TEST_DATABASE_URL` are documented
 
 **Acceptance criteria:**
-- [ ] `npm run migrate:up` runs the initial migration without error against `TEST_DATABASE_URL`
-- [ ] `npm run migrate:down` fully reverts the migration (no tables remain except system tables)
-- [ ] `GET /health` returns `{ status: 'ok', db: 'ok' }` when the database is reachable
-- [ ] `GET /health` returns `{ status: 'degraded', db: 'error' }` (HTTP 200) when the database is unreachable — tested by temporarily pointing at a bad connection string
-- [ ] `project_snapshots` table is created (even though it will not be used in V1)
-- [ ] `tsc --noEmit` passes with zero errors
-- [ ] `eslint src` passes with zero errors
+- [x] `npm run migrate:up` runs the initial migration without error against `TEST_DATABASE_URL`
+- [x] `npm run migrate:down` fully reverts the migration (no tables remain except system tables)
+- [x] `GET /health` returns `{ status: 'ok', db: 'ok' }` when the database is reachable
+- [x] `GET /health` returns `{ status: 'degraded', db: 'error' }` (HTTP 200) when the database is unreachable — tested by temporarily pointing at a bad connection string
+- [x] `project_snapshots` table is created (even though it will not be used in V1)
+- [x] `tsc --noEmit` passes with zero errors
+- [x] `eslint src` passes with zero errors
 
 **Must not do:**
 - Must not use an ORM — raw `pg` queries only
@@ -87,7 +89,8 @@ All indexes from the schema must be included.
 
 ### Task 1.3 — Auth service and API routes
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-02
 > **Depends on:** Task 1.2
 
 **What this task implements:**
@@ -126,26 +129,26 @@ The full auth system: registration, email verification, login, logout, password 
 - `backend/tests/api/auth.test.ts` — Integration tests against TEST_DATABASE_URL
 
 **Acceptance criteria:**
-- [ ] `POST /auth/register`: creates user with `email_verified = false`, returns 201
-- [ ] `POST /auth/register`: duplicate email returns 409
-- [ ] `POST /auth/register`: password shorter than 12 chars returns 400 with error message
-- [ ] `POST /auth/register`: invalid email format returns 400
-- [ ] `POST /auth/verify-email`: valid token → user verified, session issued, JWT cookie set, returns 200
-- [ ] `POST /auth/verify-email`: expired token returns 400
-- [ ] `POST /auth/verify-email`: already-used token returns 400
-- [ ] `POST /auth/verify-email`: non-existent token returns 400
-- [ ] `POST /auth/login`: correct credentials + verified email → JWT cookie set, returns 200
-- [ ] `POST /auth/login`: wrong password returns 401
-- [ ] `POST /auth/login`: unverified email returns 403
-- [ ] `POST /auth/logout`: deletes session row; subsequent authenticated request returns 401
-- [ ] `GET /auth/me`: with valid session returns `{ user: { id, email, displayName } }`
-- [ ] `GET /auth/me`: with deleted jti returns 401
-- [ ] `POST /auth/forgot-password`: always returns 200 (no email enumeration), sends email if user exists
-- [ ] `POST /auth/reset-password`: valid token → password updated, old token invalidated, returns 200
-- [ ] JWT middleware populates `req.user` on authenticated routes
-- [ ] `tsc --noEmit` passes with zero errors
-- [ ] `eslint src` passes with zero errors
-- [ ] `cd backend && npm test -- api/auth` passes
+- [x] `POST /auth/register`: creates user with `email_verified = false`, returns 201
+- [x] `POST /auth/register`: duplicate email returns 409
+- [x] `POST /auth/register`: password shorter than 12 chars returns 400 with error message
+- [x] `POST /auth/register`: invalid email format returns 400
+- [x] `POST /auth/verify-email`: valid token → user verified, session issued, JWT cookie set, returns 200
+- [x] `POST /auth/verify-email`: expired token returns 400
+- [x] `POST /auth/verify-email`: already-used token returns 400
+- [x] `POST /auth/verify-email`: non-existent token returns 400
+- [x] `POST /auth/login`: correct credentials + verified email → JWT cookie set, returns 200
+- [x] `POST /auth/login`: wrong password returns 401
+- [x] `POST /auth/login`: unverified email returns 403
+- [x] `POST /auth/logout`: deletes session row; subsequent authenticated request returns 401
+- [x] `GET /auth/me`: with valid session returns `{ user: { id, email, displayName } }`
+- [x] `GET /auth/me`: with deleted jti returns 401
+- [x] `POST /auth/forgot-password`: always returns 200 (no email enumeration), sends email if user exists
+- [x] `POST /auth/reset-password`: valid token → password updated, old token invalidated, returns 200
+- [x] JWT middleware populates `req.user` on authenticated routes
+- [x] `tsc --noEmit` passes with zero errors
+- [x] `eslint src` passes with zero errors
+- [x] `cd backend && npm test -- api/auth` passes
 
 **Must not do:**
 - Must not return different error messages for "email not found" vs "wrong password" on the login endpoint (prevents enumeration)
@@ -155,7 +158,7 @@ The full auth system: registration, email verification, login, logout, password 
 
 ### Task 1.4 — Project CRUD API
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Depends on:** Task 1.3
 
 **What this task implements:**
@@ -173,30 +176,30 @@ All five project routes plus the project service layer. Config validation uses t
 - `backend/tests/api/projects.test.ts` — Integration tests
 
 **Acceptance criteria:**
-- [ ] `POST /projects`: valid config → project created with generated slug, returns 201 with full project object
-- [ ] `POST /projects`: config missing `color.primaryHex` returns 400 with Zod error details
-- [ ] `POST /projects`: config with invalid projectType returns 400
-- [ ] `POST /projects`: unauthenticated returns 401
-- [ ] `GET /projects`: returns array of the authenticated user's projects; empty array when none exist
-- [ ] `GET /projects`: unauthenticated returns 401
-- [ ] `GET /projects/:id`: own project returns full project object including stored config
-- [ ] `GET /projects/:id`: another user's project returns 403
-- [ ] `GET /projects/:id`: non-existent id returns 404
-- [ ] `PATCH /projects/:id`: partial config update deep-merges with existing config, validates, returns updated project
-- [ ] `PATCH /projects/:id`: invalid merge result (e.g. setting projectType to an invalid value) returns 400
-- [ ] `PATCH /projects/:id`: another user's project returns 403
-- [ ] `DELETE /projects/:id`: own project deleted, returns 204
-- [ ] `DELETE /projects/:id`: another user's project returns 403
-- [ ] Slug uniqueness: two projects with the same name for the same user get different slugs
-- [ ] `tsc --noEmit` passes with zero errors
-- [ ] `eslint src` passes with zero errors
-- [ ] `cd backend && npm test -- api/projects` passes
+- [x] `POST /projects`: valid config → project created with generated slug, returns 201 with full project object
+- [x] `POST /projects`: config missing `color.primaryHex` returns 400 with Zod error details
+- [x] `POST /projects`: config with invalid projectType returns 400
+- [x] `POST /projects`: unauthenticated returns 401
+- [x] `GET /projects`: returns array of the authenticated user's projects; empty array when none exist
+- [x] `GET /projects`: unauthenticated returns 401
+- [x] `GET /projects/:id`: own project returns full project object including stored config
+- [x] `GET /projects/:id`: another user's project returns 403
+- [x] `GET /projects/:id`: non-existent id returns 404
+- [x] `PATCH /projects/:id`: partial config update deep-merges with existing config, validates, returns updated project
+- [x] `PATCH /projects/:id`: invalid merge result (e.g. setting projectType to an invalid value) returns 400
+- [x] `PATCH /projects/:id`: another user's project returns 403
+- [x] `DELETE /projects/:id`: own project deleted, returns 204
+- [x] `DELETE /projects/:id`: another user's project returns 403
+- [x] Slug uniqueness: two projects with the same name for the same user get different slugs
+- [x] `tsc --noEmit` passes with zero errors
+- [x] `eslint src` passes with zero errors
+- [x] `cd backend && npm test -- api/projects` passes
 
 ---
 
 ### Task 1.5 — Export and agent API endpoints
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Depends on:** Task 1.4
 
 **What this task implements:**
@@ -220,20 +223,20 @@ The generation endpoints that wire Phase 0's `generate()` pipeline to real HTTP 
 - `backend/tests/api/generate.test.ts` — Integration tests
 
 **Acceptance criteria:**
-- [ ] `POST /projects/:id/export`: returns `{ files: GeneratedFile[] }` with all 12+ required paths
-- [ ] `POST /projects/:id/export`: updates `last_exported_at` on the project record
-- [ ] `POST /projects/:id/export`: another user's project returns 403
-- [ ] `POST /projects/:id/export`: unauthenticated returns 401
-- [ ] `GET /projects/:id/export.zip`: returns a valid ZIP (parseable by jszip) containing all required file paths
-- [ ] `GET /projects/:id/export.zip`: response has correct `Content-Disposition` header with project slug
-- [ ] `GET /api/v1/systems/:projectId/spec`: no auth required; returns parsed agent-spec JSON with all required keys (`version`, `projectId`, `projectName`, `generatedAt`, `config`, `tokens`, `components`, `rules`)
-- [ ] `GET /api/v1/systems/:projectId/spec`: non-existent project returns 404
-- [ ] `GET /api/v1/systems/:projectId/manifest`: valid CLI token returns `{ files: GeneratedFile[] }`
-- [ ] `GET /api/v1/systems/:projectId/manifest`: no token returns 401
-- [ ] `POST /auth/cli-token`: authenticated user receives a long-lived JWT token
-- [ ] `tsc --noEmit` passes with zero errors
-- [ ] `eslint src` passes with zero errors
-- [ ] `cd backend && npm test -- api/generate` passes
+- [x] `POST /projects/:id/export`: returns `{ files: GeneratedFile[] }` with all 12+ required paths
+- [x] `POST /projects/:id/export`: updates `last_exported_at` on the project record
+- [x] `POST /projects/:id/export`: another user's project returns 403
+- [x] `POST /projects/:id/export`: unauthenticated returns 401
+- [x] `GET /projects/:id/export.zip`: returns a valid ZIP (parseable by jszip) containing all required file paths
+- [x] `GET /projects/:id/export.zip`: response has correct `Content-Disposition` header with project slug
+- [x] `GET /api/v1/systems/:projectId/spec`: no auth required; returns parsed agent-spec JSON with all required keys (`version`, `projectId`, `projectName`, `generatedAt`, `config`, `tokens`, `components`, `rules`)
+- [x] `GET /api/v1/systems/:projectId/spec`: non-existent project returns 404
+- [x] `GET /api/v1/systems/:projectId/manifest`: valid CLI token returns `{ files: GeneratedFile[] }`
+- [x] `GET /api/v1/systems/:projectId/manifest`: no token returns 401
+- [x] `POST /auth/cli-token`: authenticated user receives a long-lived JWT token
+- [x] `tsc --noEmit` passes with zero errors
+- [x] `eslint src` passes with zero errors
+- [x] `cd backend && npm test -- api/generate` passes
 
 **Must not do:**
 - Must not add rate limiting or in-process caching to the agent API — that's Phase 4
@@ -242,7 +245,7 @@ The generation endpoints that wire Phase 0's `generate()` pipeline to real HTTP 
 
 ### Task 1.6 — Frontend stub
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Depends on:** Task 1.3 (auth API must exist for login/register to call)
 
 **What this task implements:**
@@ -298,17 +301,17 @@ interface UserStore {
 - `frontend/src/main.tsx`
 
 **Acceptance criteria:**
-- [ ] `npm run dev` in `frontend/` starts the dev server without errors
-- [ ] `tsc --noEmit` in `frontend/` passes with zero errors
-- [ ] Login page: submitting valid credentials logs in the user, fetches user from `GET /auth/me`, redirects to home
-- [ ] Login page: wrong credentials shows error message below the form
-- [ ] Register page: submitting valid details calls `POST /auth/register` and shows "Check your email" message
-- [ ] Register page: server-side validation error (e.g. email in use) shows the error message
-- [ ] Home page: authenticated user sees their projects listed (or empty state "No projects yet")
-- [ ] Home page: unauthenticated user is redirected to `/login`
-- [ ] `/new` and `/projects/:id` routes load without crashing (stub content is acceptable)
-- [ ] All three Zustand stores are typed correctly — `tsc --noEmit` enforces this
-- [ ] No `any` types in store or API client files
+- [x] `npm run dev` in `frontend/` starts the dev server without errors
+- [x] `tsc --noEmit` in `frontend/` passes with zero errors
+- [x] Login page: submitting valid credentials logs in the user, fetches user from `GET /auth/me`, redirects to home
+- [x] Login page: wrong credentials shows error message below the form
+- [x] Register page: submitting valid details calls `POST /auth/register` and shows "Check your email" message
+- [x] Register page: server-side validation error (e.g. email in use) shows the error message
+- [x] Home page: authenticated user sees their projects listed (or empty state "No projects yet")
+- [x] Home page: unauthenticated user is redirected to `/login`
+- [x] `/new` and `/projects/:id` routes load without crashing (stub content is acceptable)
+- [x] All three Zustand stores are typed correctly — `tsc --noEmit` enforces this
+- [x] No `any` types in store or API client files
 
 **Must not do:**
 - Must not implement any creation flow — that's Phase 2
@@ -319,7 +322,7 @@ interface UserStore {
 
 ### Task 1.7 — Phase 1 Playwright tests
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Depends on:** Tasks 1.3, 1.6 (auth routes and frontend login page must exist)
 
 **What this task implements:**
@@ -338,11 +341,11 @@ End-to-end Playwright tests for the Phase 1 user journeys. Tests run against a r
 3. **Unauthenticated redirect:** Navigate to `/` without being logged in. Assert redirect to `/login`.
 
 **Acceptance criteria:**
-- [ ] `cd frontend && npx playwright test phase-1` runs all three tests and all pass
-- [ ] Tests run against a real local server (not mocked)
-- [ ] Verification token extraction (`X-Verification-Token`) only works in `NODE_ENV=test` — a test of the production code path, not a mock
-- [ ] Journey steps 3.1.1–3.1.4 and 3.2.1 are covered (as noted in `docs/user-journeys.md`)
-- [ ] `SESSION_LOG.md` updated with session entry and new Current State block
+- [x] `cd frontend && npx playwright test phase-1` runs all three tests and all pass
+- [x] Tests run against a real local server (not mocked)
+- [x] Verification token extraction (`X-Verification-Token`) only works in `NODE_ENV=test` — a test of the production code path, not a mock
+- [x] Journey steps 3.1.1–3.1.4 and 3.2.1 are covered (as noted in `docs/user-journeys.md`)
+- [x] `SESSION_LOG.md` updated with session entry and new Current State block
 
 **Must not do:**
 - Must not intercept network requests to mock backend responses — tests must run against real server + real database
@@ -354,17 +357,17 @@ End-to-end Playwright tests for the Phase 1 user journeys. Tests run against a r
 
 Before starting Phase 2, verify all of the following:
 
-- [ ] All tasks above marked `[x]` complete
-- [ ] `cd backend && npm test` — all tests pass
-- [ ] `cd frontend && npm test` — all unit tests pass (if any)
-- [ ] `cd frontend && npx playwright test` — all Phase 1 e2e tests pass
-- [ ] `tsc --noEmit` in `packages/types`, `backend`, and `frontend` — all pass with zero errors
-- [ ] `eslint src` in `backend` and `frontend` — zero errors
-- [ ] `GET /health` returns `{ status: 'ok', db: 'ok' }` with the database running
-- [ ] `POST /auth/register` → `POST /auth/verify-email` → `POST /auth/login` flow works end-to-end
-- [ ] `GET /projects/:id/export.zip` returns a valid ZIP containing all pipeline output
-- [ ] `GET /api/v1/systems/:projectId/spec` returns agent spec JSON with all required fields
-- [ ] Phase retrospective written to `docs/phase-1-retro.md`
-- [ ] `docs/user-journeys.md` updated for Phase 2 scope
-- [ ] `docs/design-system-plan-summary.md` updated to mark Phase 1 Complete
-- [ ] Session log archived to `logs/phase-1.md`
+- [x] All tasks above marked `[x]` complete
+- [x] `cd backend && npm test` — all tests pass
+- [x] `cd frontend && npm test` — all unit tests pass (if any)
+- [x] `cd frontend && npx playwright test` — all Phase 1 e2e tests pass
+- [x] `tsc --noEmit` in `packages/types`, `backend`, and `frontend` — all pass with zero errors
+- [x] `eslint src` in `backend` and `frontend` — zero errors
+- [x] `GET /health` returns `{ status: 'ok', db: 'ok' }` with the database running
+- [x] `POST /auth/register` → `POST /auth/verify-email` → `POST /auth/login` flow works end-to-end
+- [x] `GET /projects/:id/export.zip` returns a valid ZIP containing all pipeline output
+- [x] `GET /api/v1/systems/:projectId/spec` returns agent spec JSON with all required fields
+- [x] Phase retrospective written to `docs/phase-1-retro.md`
+- [x] `docs/user-journeys.md` updated for Phase 2 scope
+- [x] `docs/design-system-plan-summary.md` updated to mark Phase 1 Complete
+- [x] Session log archived to `logs/phase-1.md`

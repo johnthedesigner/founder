@@ -1,17 +1,11 @@
-# Session Log — Design System Generator
+# Session Log — Phase 1: Backend and Auth
 
-## Current State
+## State at end of Phase 1
 
-**Phase:** 2 — Creation Flow
-**Next task:** Phase 2, Task 2.1 (phase-2.md not yet authored — write it before starting)
-**What's built:** Phases 0 and 1 complete. Full generation pipeline + Express backend with Postgres, auth, project CRUD, export/agent API, CLI token endpoint, frontend stub (login/register/home). 251 backend tests + 3 Playwright e2e tests passing.
-**Open questions:** None.
-
----
-
-## Phase 1 archive
-
-Phase 1 session entries are archived at `logs/phase-1.md`.
+**Phase:** 1 — Backend and Auth
+**All tasks:** 1.1–1.7 complete
+**Tests:** 251 backend (vitest) + 3 Playwright e2e
+**What's built:** Full Express backend with Postgres, auth system, project CRUD, export/agent API, CLI token endpoint. Frontend stub with login, register, home page. Playwright e2e covering register→verify→login, wrong-password error, unauthenticated redirect.
 
 ---
 
@@ -209,36 +203,3 @@ Phase 1 session entries are archived at `logs/phase-1.md`.
 - `tsc --noEmit`: zero errors
 - `eslint backend/src`: zero errors
 - `npm test`: 202/202 pass (13 test files)
-
----
-
-## Phase 0 archive
-
-Phase 0 session entries are archived at `logs/phase-0.md`.
-
----
-
-## 2026-05-01 — Phase 0 housekeeping
-
-**What was done:**
-
-- Ran full test suite to confirm pass state: 201/201 tests passing, 12 test files
-- Verified `tsc --noEmit` in `packages/types` and `backend`: zero errors
-- Verified `eslint backend/src`: zero errors
-- Confirmed `tasks/phase-0.md` has all acceptance criteria marked `[x]`
-- Wrote `docs/phase-0-retro.md`
-- Updated `docs/design-system-plan-summary.md`: Phase 0 → Complete, Phase 1 → Not started ← current
-- Updated `docs/user-journeys.md`: added Phase 1 coverage entries (Journey 3.1.1–3.1.4 and 3.2.1)
-- Authored `tasks/phase-1.md`: 7 tasks (server setup, DB, auth, project CRUD, export/agent API, frontend stub, Playwright)
-- Updated `AGENTS.md` Patterns section with 7 patterns established in Phase 0
-- Archived this session log to `logs/phase-0.md`
-
-**Decisions made:**
-
-- Phase 1 task structure follows the dev plan strictly. Auth is one task (1.3) covering the full auth service + routes together since they're tightly coupled. Frontend stub is one task (1.6) since it's minimal.
-- Phase 1 Playwright approach: `NODE_ENV=test` causes the auth service to include the verification token in the registration response header (`X-Verification-Token`). This avoids mocking while still allowing automated e2e verification.
-- User journeys update: added Phase 1 e2e coverage for register/verify/login flow (3.1.1–3.1.4) and home page empty state (3.2.1). Journey step 3.1.5 (project saved after account creation) is Phase 3 since it requires the creation flow from Phase 2.
-- The agent API (5.1.1–5.1.4) stays listed as Phase 4 in the coverage table because Phase 4 is when the Playwright e2e test for it is written. Phase 1 has API integration tests for it, but those are `backend/tests/api/generate.test.ts`, not Playwright.
-
-**What was not done:**
-- No Phase 1 code — waiting for instruction to begin.
