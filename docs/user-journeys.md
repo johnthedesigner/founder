@@ -187,13 +187,15 @@ Update this table when adding or modifying Playwright tests.
 
 | Journey step | Test file | Test name | Phase |
 |---|---|---|---|
+| 3.1.1–3.1.4 | `e2e/phase-1.spec.ts` | register → verify email → login → home page | 1 |
+| 3.2.1 | `e2e/phase-1.spec.ts` | log in → home page shows project list (empty state) | 1 |
 | 1.1.1–1.1.2 | `e2e/phase-2.spec.ts` | default state: preview renders on load | 2 |
 | 1.2.1 | `e2e/phase-2.spec.ts` | project type change updates scope chips | 2 |
 | 1.2.6 | `e2e/phase-2.spec.ts` | color direction change updates preview | 2 |
 | 1.3.2–1.3.5 | `e2e/phase-2.spec.ts` | personality axis changes update preview within 500ms | 2 |
 | 1.5.2–1.5.3 | `e2e/phase-2.spec.ts` | download ZIP → valid contents | 2 |
-| 3.1.1–3.1.5 | `e2e/phase-3.spec.ts` | create account at export → project saved | 3 |
-| 3.2.1–3.2.5 | `e2e/phase-3.spec.ts` | return to saved project → config intact → re-export | 3 |
+| 3.1.5 | `e2e/phase-3.spec.ts` | create account at export → project saved | 3 |
+| 3.2.2–3.2.5 | `e2e/phase-3.spec.ts` | return to saved project → config intact → re-export | 3 |
 | 3.3.4 | `e2e/phase-3.spec.ts` | duplicate project → appears in grid | 3 |
 | 3.3.5 | `e2e/phase-3.spec.ts` | delete project → removed from grid | 3 |
 | 4.2.3–4.2.4 | `e2e/phase-4.spec.ts` | CLI init → files written; CLI sync → files updated | 4 |

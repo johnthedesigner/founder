@@ -1,6 +1,6 @@
 # Phase 0 — Pipeline Foundation
 
-> **Status:** In progress
+> **Status:** Complete
 > **Depends on:** Nothing. This is the first phase.
 > **Reference:** `docs/design-system-dev-plan.md` § Phase 0 — Pipeline Foundation
 
@@ -32,16 +32,16 @@ The shared type definitions for the entire project (`ProjectConfig` and all sub-
 - `backend/tests/pipeline/types.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] All types in `packages/types/src/config.ts` match the definitions in `docs/design-system-dev-plan.md` § The `ProjectConfig` Type exactly — verify by code review against that section
-- [ ] `ProjectConfigSchema` (Zod) is exported from `packages/types/src/index.ts` and accepts `DEFAULT_CONFIG` without throwing
-- [ ] `DEFAULT_CONFIG.color.primaryHex` is `'#3b82f6'`
-- [ ] `DEFAULT_CONFIG` passes `ProjectConfigSchema.parse()` in a test — this is the canonical validity check
-- [ ] `SAFE_DEFAULT_PRIMARIES` has exactly 8 members and every member matches `/^#[0-9a-f]{6}$/i`
-- [ ] `tsc` (emit mode) builds `packages/types` with zero errors and writes declaration files to `packages/types/dist/`
-- [ ] `tsc --noEmit` passes in both `packages/types` and `backend` with zero errors
-- [ ] `backend` can import `ProjectConfig` from `@ds-gen/types` in a test file without TypeScript errors (workspace symlink resolves correctly after `npm install`)
-- [ ] Tests pass: `cd backend && npm test -- types`
-- [ ] `SESSION_LOG.md` updated with session entry and new Current State block
+- [x] All types in `packages/types/src/config.ts` match the definitions in `docs/design-system-dev-plan.md` § The `ProjectConfig` Type exactly — verify by code review against that section
+- [x] `ProjectConfigSchema` (Zod) is exported from `packages/types/src/index.ts` and accepts `DEFAULT_CONFIG` without throwing
+- [x] `DEFAULT_CONFIG.color.primaryHex` is `'#3b82f6'`
+- [x] `DEFAULT_CONFIG` passes `ProjectConfigSchema.parse()` in a test — this is the canonical validity check
+- [x] `SAFE_DEFAULT_PRIMARIES` has exactly 8 members and every member matches `/^#[0-9a-f]{6}$/i`
+- [x] `tsc` (emit mode) builds `packages/types` with zero errors and writes declaration files to `packages/types/dist/`
+- [x] `tsc --noEmit` passes in both `packages/types` and `backend` with zero errors
+- [x] `backend` can import `ProjectConfig` from `@ds-gen/types` in a test file without TypeScript errors (workspace symlink resolves correctly after `npm install`)
+- [x] Tests pass: `cd backend && npm test -- types`
+- [x] `SESSION_LOG.md` updated with session entry and new Current State block
 
 **Must not do:**
 - Must not implement any pipeline logic — no color generation, no token mapping, no code generation
@@ -65,17 +65,17 @@ The `generateColorScale` function in `backend/src/pipeline/palette/generator.ts`
 - `backend/tests/pipeline/palette/generator.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] `generateColorScale` accepts a hex string and returns a `ColorScale` with exactly 19 keys: `50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950`
-- [ ] All returned values are valid 6-digit hex strings matching `/^#[0-9a-f]{6}$/i`
-- [ ] `TARGET_CONTRASTS` is exported and contains an entry for every one of the 19 shade keys
-- [ ] Shade 50 has a WCAG contrast ratio against `#ffffff` less than 1.5 for any chromatic input (near-white end of scale)
-- [ ] Shade 950 has a WCAG contrast ratio against `#000000` less than 1.5 for any chromatic input (near-black end of scale)
-- [ ] **Cross-hue consistency test:** For shades 100, 300, 500, 700, 900 — the contrast ratio of that shade against white (for 100/300) or black (for 700/900) is within ±0.3 of `TARGET_CONTRASTS[shade]` for each of four hues: `#3b82f6` (blue), `#e63946` (red), `#16a34a` (green), `#d97706` (amber)
-- [ ] A gray seed (`#808080`) produces a valid 19-step scale with no errors thrown
-- [ ] The function is pure: two calls with identical input return identical output (deep-equal assertion)
-- [ ] Tests pass: `cd backend && npm test -- generator`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] `generateColorScale` accepts a hex string and returns a `ColorScale` with exactly 19 keys: `50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950`
+- [x] All returned values are valid 6-digit hex strings matching `/^#[0-9a-f]{6}$/i`
+- [x] `TARGET_CONTRASTS` is exported and contains an entry for every one of the 19 shade keys
+- [x] Shade 50 has a WCAG contrast ratio against `#ffffff` less than 1.5 for any chromatic input (near-white end of scale)
+- [x] Shade 950 has a WCAG contrast ratio against `#000000` less than 1.5 for any chromatic input (near-black end of scale)
+- [x] **Cross-hue consistency test:** For shades 100, 300, 500, 700, 900 — the contrast ratio of that shade against white (for 100/300) or black (for 700/900) is within ±0.3 of `TARGET_CONTRASTS[shade]` for each of four hues: `#3b82f6` (blue), `#e63946` (red), `#16a34a` (green), `#d97706` (amber)
+- [x] A gray seed (`#808080`) produces a valid 19-step scale with no errors thrown
+- [x] The function is pure: two calls with identical input return identical output (deep-equal assertion)
+- [x] Tests pass: `cd backend && npm test -- generator`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not generate the full primitive token set — that is Task 0.4
@@ -98,19 +98,19 @@ The accessibility validation utilities in `backend/src/pipeline/tokens/accessibi
 - `backend/tests/pipeline/tokens/accessibility.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] `contrastRatio(hex1: string, hex2: string): number` returns a number ≥ 1.0 for any valid hex pair using the WCAG relative luminance formula
-- [ ] `contrastRatio('#ffffff', '#ffffff')` returns `1.0` (±0.01)
-- [ ] `contrastRatio('#000000', '#ffffff')` returns `21.0` (±0.1)
-- [ ] `contrastRatio('#3b82f6', '#ffffff')` returns a pre-computed known value — calculate it once, hard-code it as the expected value in the test, and assert it matches to two decimal places (this pins the implementation against drift)
-- [ ] `meetsAA('#000000', '#ffffff', false)` returns `true`; `meetsAA('#ffffff', '#ffffff', false)` returns `false`
-- [ ] `meetsAA` uses threshold 4.5 for normal text (`largeText = false`) and 3.0 for large text (`largeText = true`)
-- [ ] `meetsAAA` uses threshold 7.0 for normal text and 4.5 for large text
-- [ ] `findAccessibleStep(scale, background, minRatio)` returns the hex value from `scale` whose contrast against `background` meets `minRatio` — specifically, the step that is closest to `minRatio` from above (the darkest shade that still passes, not the lightest)
-- [ ] `findAccessibleStep` returns the input step unchanged if it already meets `minRatio`
-- [ ] `findAccessibleStep` throws a descriptive error (not a silent undefined return) if no step in the scale meets `minRatio`
-- [ ] Tests pass: `cd backend && npm test -- accessibility`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] `contrastRatio(hex1: string, hex2: string): number` returns a number ≥ 1.0 for any valid hex pair using the WCAG relative luminance formula
+- [x] `contrastRatio('#ffffff', '#ffffff')` returns `1.0` (±0.01)
+- [x] `contrastRatio('#000000', '#ffffff')` returns `21.0` (±0.1)
+- [x] `contrastRatio('#3b82f6', '#ffffff')` returns a pre-computed known value — calculate it once, hard-code it as the expected value in the test, and assert it matches to two decimal places (this pins the implementation against drift)
+- [x] `meetsAA('#000000', '#ffffff', false)` returns `true`; `meetsAA('#ffffff', '#ffffff', false)` returns `false`
+- [x] `meetsAA` uses threshold 4.5 for normal text (`largeText = false`) and 3.0 for large text (`largeText = true`)
+- [x] `meetsAAA` uses threshold 7.0 for normal text and 4.5 for large text
+- [x] `findAccessibleStep(scale, background, minRatio)` returns the hex value from `scale` whose contrast against `background` meets `minRatio` — specifically, the step that is closest to `minRatio` from above (the darkest shade that still passes, not the lightest)
+- [x] `findAccessibleStep` returns the input step unchanged if it already meets `minRatio`
+- [x] `findAccessibleStep` throws a descriptive error (not a silent undefined return) if no step in the scale meets `minRatio`
+- [x] Tests pass: `cd backend && npm test -- accessibility`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not implement any token generation or mapping logic — this file is utilities only
@@ -134,21 +134,21 @@ The `generatePrimitives` function in `backend/src/pipeline/tokens/primitives.ts`
 - `backend/tests/pipeline/tokens/primitives.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] `generatePrimitives(DEFAULT_CONFIG)` returns a `PrimitiveTokenSet` with non-empty `colors`, `spacing`, `typeSizes`, `radii`, and `shadows` fields
-- [ ] `colors` contains exactly one entry for `primary` and one for `neutral` when only those hue families are present in the config; also contains `secondary` and `accent` entries when those are set in `config.color`
-- [ ] Each color scale has exactly 19 keys: `50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950`
-- [ ] Spacing scale for `compact` density: `space-2` = `'6px'` (3px base × 2 multiplier)
-- [ ] Spacing scale for `balanced` density: `space-2` = `'8px'` (4px base × 2 multiplier)
-- [ ] Spacing scale for `spacious` density: `space-2` = `'10px'` (5px base × 2 multiplier)
-- [ ] Type size scale for ratio `1.25` produces 7 steps; `text-base` = `'1rem'`; `text-lg` = `'1.25rem'`
-- [ ] Type size scale for ratio `1.333` produces 7 steps; `text-lg` = `'1.333rem'` (±0.001)
-- [ ] Radius step values differ between `professional` personality and `approachable` personality — assert that `radii['radius-md']` is not equal between configs using those two values
-- [ ] `flat` dimensionality produces `'none'` for all three shadow steps (`shadow-sm`, `shadow-md`, `shadow-lg`)
-- [ ] `subtle` and `dimensional` dimensionality each produce non-`'none'` values for all three shadow steps
-- [ ] Primitives are mode-agnostic: `generatePrimitives` called with `{ ...DEFAULT_CONFIG, modes: ['light', 'dark'] }` returns output identical to `generatePrimitives(DEFAULT_CONFIG)` (deep-equal)
-- [ ] Tests pass: `cd backend && npm test -- primitives`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] `generatePrimitives(DEFAULT_CONFIG)` returns a `PrimitiveTokenSet` with non-empty `colors`, `spacing`, `typeSizes`, `radii`, and `shadows` fields
+- [x] `colors` contains exactly one entry for `primary` and one for `neutral` when only those hue families are present in the config; also contains `secondary` and `accent` entries when those are set in `config.color`
+- [x] Each color scale has exactly 19 keys: `50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950`
+- [x] Spacing scale for `compact` density: `space-2` = `'6px'` (3px base × 2 multiplier)
+- [x] Spacing scale for `balanced` density: `space-2` = `'8px'` (4px base × 2 multiplier)
+- [x] Spacing scale for `spacious` density: `space-2` = `'10px'` (5px base × 2 multiplier)
+- [x] Type size scale for ratio `1.25` produces 7 steps; `text-base` = `'1rem'`; `text-lg` = `'1.25rem'`
+- [x] Type size scale for ratio `1.333` produces 7 steps; `text-lg` = `'1.333rem'` (±0.001)
+- [x] Radius step values differ between `professional` personality and `approachable` personality — assert that `radii['radius-md']` is not equal between configs using those two values
+- [x] `flat` dimensionality produces `'none'` for all three shadow steps (`shadow-sm`, `shadow-md`, `shadow-lg`)
+- [x] `subtle` and `dimensional` dimensionality each produce non-`'none'` values for all three shadow steps
+- [x] Primitives are mode-agnostic: `generatePrimitives` called with `{ ...DEFAULT_CONFIG, modes: ['light', 'dark'] }` returns output identical to `generatePrimitives(DEFAULT_CONFIG)` (deep-equal)
+- [x] Tests pass: `cd backend && npm test -- primitives`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not implement semantic token mapping — that is Task 0.5
@@ -171,18 +171,18 @@ The `generateSemanticTokens` function in `backend/src/pipeline/tokens/semantic.t
 - `backend/tests/pipeline/tokens/semantic.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] Output contains all semantic color token keys defined in `docs/design-system-spec.md` § Layer 2 — Semantic Tokens; assert each of these is present: `color.action.primary`, `color.action.primary.hover`, `color.action.primary.fg`, `color.action.secondary`, `color.action.secondary.fg`, `color.action.destructive`, `color.action.destructive.fg`, `color.surface.default`, `color.surface.raised`, `color.surface.overlay`, `color.surface.subtle`, `color.text.primary`, `color.text.secondary`, `color.text.disabled`, `color.text.on-action`, `color.border.default`, `color.border.strong`, `color.border.action`, `color.feedback.success`, `color.feedback.warning`, `color.feedback.error`, `color.feedback.info`
-- [ ] Output contains all typography semantic tokens: `font.family.display`, `font.family.body`, `font.family.ui`, `font.family.code`, and `font.size.xs` through `font.size.5xl`, and `font.weight.normal`, `.medium`, `.semibold`, `.bold`, and `font.line-height.tight`, `.normal`, `.relaxed`
-- [ ] Output contains spacing, radius, and shadow semantic tokens
-- [ ] **WCAG AA enforcement:** For every foreground/background semantic color pair in the output, `contrastRatio(fg, bg) >= 4.5` for text pairs and `>= 3.0` for UI component pairs — assert programmatically across the full output for `DEFAULT_CONFIG`
-- [ ] A config with `primaryHex: '#a8c5f5'` (a very light blue that fails AA against white) triggers at least one auto-correction — the `corrections` array on the output is non-empty
-- [ ] All tokens in a corrected output still meet WCAG AA — run the same contrast assertion on the corrected output
-- [ ] Single-mode config (`modes: ['light']`) produces one resolved value per semantic color token
-- [ ] Dual-mode config (`modes: ['light', 'dark']`) produces two resolved values per semantic color token: `light` and `dark`
-- [ ] Dark mode values differ from light mode values for `color.surface.default` and `color.text.primary` — assert they are not equal
-- [ ] Tests pass: `cd backend && npm test -- semantic`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] Output contains all semantic color token keys defined in `docs/design-system-spec.md` § Layer 2 — Semantic Tokens; assert each of these is present: `color.action.primary`, `color.action.primary.hover`, `color.action.primary.fg`, `color.action.secondary`, `color.action.secondary.fg`, `color.action.destructive`, `color.action.destructive.fg`, `color.surface.default`, `color.surface.raised`, `color.surface.overlay`, `color.surface.subtle`, `color.text.primary`, `color.text.secondary`, `color.text.disabled`, `color.text.on-action`, `color.border.default`, `color.border.strong`, `color.border.action`, `color.feedback.success`, `color.feedback.warning`, `color.feedback.error`, `color.feedback.info`
+- [x] Output contains all typography semantic tokens: `font.family.display`, `font.family.body`, `font.family.ui`, `font.family.code`, and `font.size.xs` through `font.size.5xl`, and `font.weight.normal`, `.medium`, `.semibold`, `.bold`, and `font.line-height.tight`, `.normal`, `.relaxed`
+- [x] Output contains spacing, radius, and shadow semantic tokens
+- [x] **WCAG AA enforcement:** For every foreground/background semantic color pair in the output, `contrastRatio(fg, bg) >= 4.5` for text pairs and `>= 3.0` for UI component pairs — assert programmatically across the full output for `DEFAULT_CONFIG`
+- [x] A config with `primaryHex: '#a8c5f5'` (a very light blue that fails AA against white) triggers at least one auto-correction — the `corrections` array on the output is non-empty
+- [x] All tokens in a corrected output still meet WCAG AA — run the same contrast assertion on the corrected output
+- [x] Single-mode config (`modes: ['light']`) produces one resolved value per semantic color token
+- [x] Dual-mode config (`modes: ['light', 'dark']`) produces two resolved values per semantic color token: `light` and `dark`
+- [x] Dark mode values differ from light mode values for `color.surface.default` and `color.text.primary` — assert they are not equal
+- [x] Tests pass: `cd backend && npm test -- semantic`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not implement component-specific token assignments — that is Task 0.6
@@ -205,17 +205,17 @@ The `generateComponentTokens` function in `backend/src/pipeline/tokens/component
 - `backend/tests/pipeline/tokens/component.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] Output contains component token entries for all 12 Tier 1 components: `button`, `input`, `select`, `checkbox`, `radio`, `switch`, `dialog`, `tooltip`, `popover`, `tabs`, `menu`, `slider`
-- [ ] Output contains component token entries for all 5 Tier 2 components: `form-field`, `card`, `badge`, `alert`, `avatar`
-- [ ] `button.padding.sm`, `button.padding.md`, and `button.padding.lg` are all present in the output
-- [ ] `button.border-radius` is present in the output
-- [ ] `input.padding`, `input.border-radius`, `input.border-color`, and `input.border-color.focus` are present in the output
-- [ ] `compact` density config produces smaller resolved spacing values for `button.padding.md` than `spacious` density config — assert by comparing the numeric part of the resolved value strings
-- [ ] `professional` personality config produces a different `button.border-radius` value than `approachable` personality config — assert they are not equal
-- [ ] All token values in the output reference semantic token names (e.g. `space.component.sm`), not primitive token names (e.g. `space-2`) or raw px values — assert no value starts with `space-` or matches `/^\d+px$/`
-- [ ] Tests pass: `cd backend && npm test -- tokens/component`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] Output contains component token entries for all 12 Tier 1 components: `button`, `input`, `select`, `checkbox`, `radio`, `switch`, `dialog`, `tooltip`, `popover`, `tabs`, `menu`, `slider`
+- [x] Output contains component token entries for all 5 Tier 2 components: `form-field`, `card`, `badge`, `alert`, `avatar`
+- [x] `button.padding.sm`, `button.padding.md`, and `button.padding.lg` are all present in the output
+- [x] `button.border-radius` is present in the output
+- [x] `input.padding`, `input.border-radius`, `input.border-color`, and `input.border-color.focus` are present in the output
+- [x] `compact` density config produces smaller resolved spacing values for `button.padding.md` than `spacious` density config — assert by comparing the numeric part of the resolved value strings
+- [x] `professional` personality config produces a different `button.border-radius` value than `approachable` personality config — assert they are not equal
+- [x] All token values in the output reference semantic token names (e.g. `space.component.sm`), not primitive token names (e.g. `space-2`) or raw px values — assert no value starts with `space-` or matches `/^\d+px$/`
+- [x] Tests pass: `cd backend && npm test -- tokens/component`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not generate component source code (`.tsx` files) — that is Task 0.7
@@ -244,19 +244,19 @@ The component code generators in `backend/src/pipeline/components/`. Each genera
 - `backend/tests/pipeline/output/components.test.ts` — TypeScript compilation test for generated output
 
 **Acceptance criteria:**
-- [ ] Every component generator returns a non-empty string for `DEFAULT_CONFIG`
-- [ ] Generated Button code contains all four variant strings: `'primary'`, `'secondary'`, `'ghost'`, `'destructive'`
-- [ ] Generated Button code contains all three size strings: `'sm'`, `'md'`, `'lg'`
-- [ ] Generated Button code contains `'focus-visible'` (accessibility requirement — must not be omitted)
-- [ ] Generated Button code contains no primitive token names — assert the output does not match `/color\.\w+\.\d+/` (e.g. `color.blue.600` would match and fail)
-- [ ] Every generated component file contains a Base UI import from the correct package name (confirm whether `@base-ui-components/react` or `@base-ui/react` — whichever is installed)
-- [ ] A component whose category is not in `config.componentScope` is absent from the output of `generateComponents` — test with `componentScope: ['forms']` and assert no navigation components are generated
-- [ ] No generated file content contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`, `'console.log'`
-- [ ] **TypeScript compilation test** (in `output/components.test.ts`): write all generated `.tsx` files from `DEFAULT_CONFIG` to a temp directory with an appropriate `tsconfig.json` (including `react`, `react-dom`, and the Base UI package types), run `tsc --noEmit` on that directory, and assert zero errors
-- [ ] Tests pass: `cd backend && npm test -- components/codegen`
-- [ ] Output compilation test passes: `cd backend && npm test -- output/components`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] Every component generator returns a non-empty string for `DEFAULT_CONFIG`
+- [x] Generated Button code contains all four variant strings: `'primary'`, `'secondary'`, `'ghost'`, `'destructive'`
+- [x] Generated Button code contains all three size strings: `'sm'`, `'md'`, `'lg'`
+- [x] Generated Button code contains `'focus-visible'` (accessibility requirement — must not be omitted)
+- [x] Generated Button code contains no primitive token names — assert the output does not match `/color\.\w+\.\d+/` (e.g. `color.blue.600` would match and fail)
+- [x] Every generated component file contains a Base UI import from the correct package name (confirm whether `@base-ui-components/react` or `@base-ui/react` — whichever is installed)
+- [x] A component whose category is not in `config.componentScope` is absent from the output of `generateComponents` — test with `componentScope: ['forms']` and assert no navigation components are generated
+- [x] No generated file content contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`, `'console.log'`
+- [x] **TypeScript compilation test** (in `output/components.test.ts`): write all generated `.tsx` files from `DEFAULT_CONFIG` to a temp directory with an appropriate `tsconfig.json` (including `react`, `react-dom`, and the Base UI package types), run `tsc --noEmit` on that directory, and assert zero errors
+- [x] Tests pass: `cd backend && npm test -- components/codegen`
+- [x] Output compilation test passes: `cd backend && npm test -- output/components`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not generate documentation files — that is Task 0.8
@@ -283,18 +283,18 @@ The documentation generators in `backend/src/pipeline/docs/`. Each generator is 
 - `backend/tests/pipeline/docs/docs.test.ts` — Tests for this task
 
 **Acceptance criteria:**
-- [ ] `generateReadme` output contains all six required sections: what was generated, installation, token usage, dark mode, component usage, how to regenerate — assert by checking for distinct section heading strings for each
-- [ ] `generateTokensDoc` output contains every semantic token name from `docs/design-system-spec.md` § Layer 2 — assert at minimum: `color.action.primary`, `color.surface.default`, `color.text.primary`, `font.family.body`
-- [ ] `generateComponentsDoc` output contains a section for every component in the default scope — assert by checking for `'Button'`, `'Input'`, and `'Form Field'`
-- [ ] `generateDecisions(DEFAULT_CONFIG)` output contains at least one paragraph for each of: type scale, border radius, color approach, spacing density — assert by checking for at least one keyword from each category
-- [ ] `generateDecisions` output for a `serif-accented` TypeStyle config differs from its output for a `geometric` config — assert the two strings are not equal (the rationale must be config-specific)
-- [ ] `generateAgentSpec` output is valid JSON: `JSON.parse(generateAgentSpec(...))` does not throw
-- [ ] Parsed `agent-spec.json` has all required top-level keys: `version`, `projectId`, `projectName`, `generatedAt`, `config`, `tokens`, `components`, `rules`
-- [ ] Parsed `agent-spec.json` `components` array contains an entry for every component in `DEFAULT_CONFIG` scope, each with `name`, `variants`, `tokenRefs`, `accessibilityNotes`, and `usageGuidance` fields
-- [ ] No generated doc file contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`
-- [ ] Tests pass: `cd backend && npm test -- docs`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] `generateReadme` output contains all six required sections: what was generated, installation, token usage, dark mode, component usage, how to regenerate — assert by checking for distinct section heading strings for each
+- [x] `generateTokensDoc` output contains every semantic token name from `docs/design-system-spec.md` § Layer 2 — assert at minimum: `color.action.primary`, `color.surface.default`, `color.text.primary`, `font.family.body`
+- [x] `generateComponentsDoc` output contains a section for every component in the default scope — assert by checking for `'Button'`, `'Input'`, and `'Form Field'`
+- [x] `generateDecisions(DEFAULT_CONFIG)` output contains at least one paragraph for each of: type scale, border radius, color approach, spacing density — assert by checking for at least one keyword from each category
+- [x] `generateDecisions` output for a `serif-accented` TypeStyle config differs from its output for a `geometric` config — assert the two strings are not equal (the rationale must be config-specific)
+- [x] `generateAgentSpec` output is valid JSON: `JSON.parse(generateAgentSpec(...))` does not throw
+- [x] Parsed `agent-spec.json` has all required top-level keys: `version`, `projectId`, `projectName`, `generatedAt`, `config`, `tokens`, `components`, `rules`
+- [x] Parsed `agent-spec.json` `components` array contains an entry for every component in `DEFAULT_CONFIG` scope, each with `name`, `variants`, `tokenRefs`, `accessibilityNotes`, and `usageGuidance` fields
+- [x] No generated doc file contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`
+- [x] Tests pass: `cd backend && npm test -- docs`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not implement export serialization (W3C JSON, CSS, Tailwind) — that is Task 0.9
@@ -320,22 +320,22 @@ The export serializers in `backend/src/pipeline/export/`. Converts the in-memory
 - `backend/tests/pipeline/output/tailwind.test.ts` — TypeScript compilation test for generated Tailwind config
 
 **Acceptance criteria:**
-- [ ] `serializeToW3C` output parses as valid JSON with no errors
-- [ ] W3C JSON output contains `$value` and `$type` keys on leaf token entries
-- [ ] W3C JSON output uses `{path.to.token}` reference syntax for alias tokens (semantic tokens referencing primitives)
-- [ ] `serializeToCSS` output contains a `:root {` block
-- [ ] CSS output contains the custom property `--color-action-primary` (dots in token names become hyphens; hyphens in existing names are preserved)
-- [ ] CSS output for a dual-mode config (`modes: ['light', 'dark']`) contains a `[data-theme="dark"] {` block with values that differ from the `:root` block
-- [ ] CSS output for a single-mode config (`modes: ['light']`) does not contain `[data-theme="dark"]`
-- [ ] `serializeToTailwind` output is a valid TypeScript module string — starts with `import type { Config }` or `export default {`
-- [ ] **Tailwind TypeScript compilation test** (in `output/tailwind.test.ts`): write the serialized Tailwind config string to a temp file, run `tsc --noEmit` on it with a tsconfig that includes `tailwindcss`, assert zero errors
-- [ ] `assembleZip` returns a `Buffer`
-- [ ] ZIP produced by `assembleZip` contains all expected paths from `docs/design-system-spec.md` § Output Artifacts — assert these paths are present: `tokens/primitives.json`, `tokens/semantic.json`, `tokens/component.json`, `tokens/variables.css`, `tokens/tailwind.config.ts`, `components/index.ts`, `docs/README.md`, `docs/tokens.md`, `docs/components.md`, `docs/decisions.md`, `docs/agent-spec.json`, `.design-system-meta.json`
-- [ ] ZIP passes integrity check: write buffer to a temp file, run `unzip -t` on it (or use `jszip` to re-parse it), assert no errors
-- [ ] Tests pass: `cd backend && npm test -- serializers`
-- [ ] Tailwind compilation test passes: `cd backend && npm test -- output/tailwind`
-- [ ] `tsc --noEmit` passes in `backend`
-- [ ] `SESSION_LOG.md` updated
+- [x] `serializeToW3C` output parses as valid JSON with no errors
+- [x] W3C JSON output contains `$value` and `$type` keys on leaf token entries
+- [x] W3C JSON output uses `{path.to.token}` reference syntax for alias tokens (semantic tokens referencing primitives)
+- [x] `serializeToCSS` output contains a `:root {` block
+- [x] CSS output contains the custom property `--color-action-primary` (dots in token names become hyphens; hyphens in existing names are preserved)
+- [x] CSS output for a dual-mode config (`modes: ['light', 'dark']`) contains a `[data-theme="dark"] {` block with values that differ from the `:root` block
+- [x] CSS output for a single-mode config (`modes: ['light']`) does not contain `[data-theme="dark"]`
+- [x] `serializeToTailwind` output is a valid TypeScript module string — starts with `import type { Config }` or `export default {`
+- [x] **Tailwind TypeScript compilation test** (in `output/tailwind.test.ts`): write the serialized Tailwind config string to a temp file, run `tsc --noEmit` on it with a tsconfig that includes `tailwindcss`, assert zero errors
+- [x] `assembleZip` returns a `Buffer`
+- [x] ZIP produced by `assembleZip` contains all expected paths from `docs/design-system-spec.md` § Output Artifacts — assert these paths are present: `tokens/primitives.json`, `tokens/semantic.json`, `tokens/component.json`, `tokens/variables.css`, `tokens/tailwind.config.ts`, `components/index.ts`, `docs/README.md`, `docs/tokens.md`, `docs/components.md`, `docs/decisions.md`, `docs/agent-spec.json`, `.design-system-meta.json`
+- [x] ZIP passes integrity check: write buffer to a temp file, run `unzip -t` on it (or use `jszip` to re-parse it), assert no errors
+- [x] Tests pass: `cd backend && npm test -- serializers`
+- [x] Tailwind compilation test passes: `cd backend && npm test -- output/tailwind`
+- [x] `tsc --noEmit` passes in `backend`
+- [x] `SESSION_LOG.md` updated
 
 **Must not do:**
 - Must not implement the full pipeline entry point — that is Task 0.10
@@ -357,24 +357,24 @@ The `generate` entry point in `backend/src/pipeline/index.ts` that calls all sub
 - `backend/tests/pipeline/integration.test.ts` — Full pipeline integration tests
 
 **Acceptance criteria:**
-- [ ] `generate(DEFAULT_CONFIG)` returns without throwing
-- [ ] Output `files` array contains all paths from `docs/design-system-spec.md` § Output Artifacts — assert each of: `tokens/primitives.json`, `tokens/semantic.json`, `tokens/component.json`, `tokens/variables.css`, `tokens/tailwind.config.ts`, `components/index.ts`, `docs/README.md`, `docs/tokens.md`, `docs/components.md`, `docs/decisions.md`, `docs/agent-spec.json`, `.design-system-meta.json`
-- [ ] All three W3C JSON files parse with `JSON.parse` and contain `$value`/`$type` keys
-- [ ] `tokens/variables.css` content contains a `:root {` block
-- [ ] `tokens/tailwind.config.ts` content passes `tsc --noEmit` (write to temp directory and compile)
-- [ ] All component `.tsx` files in the output pass `tsc --noEmit` (write all to one temp directory with a shared tsconfig and run the compiler once)
-- [ ] `docs/agent-spec.json` parses as valid JSON with all required top-level keys
-- [ ] No generated file content contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`, `'console.log'`
-- [ ] **WCAG check:** for every semantic foreground/background pair in the output, `contrastRatio(fg, bg) >= 4.5` (text) or `>= 3.0` (UI components) — assert programmatically
-- [ ] `generate(DEFAULT_CONFIG)` completes in under 200ms — measure with `performance.now()` before and after the call and assert
-- [ ] `generate` with full config (all six `componentScope` categories, `modes: ['light', 'dark']`) completes in under 200ms
-- [ ] `generate` is deterministic: two calls with identical config produce output where every file's content is identical — assert with deep-equal on the `files` array
-- [ ] **Parameterized test:** `generate` runs without errors for all four `typeStyle` values (`geometric`, `humanist`, `serif-accented`, `monospace-accented`), both `colorSource` values (`provided` with a valid hex, `generated`), and all three `density` values (`compact`, `balanced`, `spacious`)
-- [ ] `generate` has no side effects — it does not log to stdout, does not call `fs`, does not make network calls — verify by asserting `console.log` was not called (spy on it before and after the call)
-- [ ] All tests pass: `cd backend && npm test`
-- [ ] `tsc --noEmit` passes in `packages/types` and `backend` with zero errors
-- [ ] `eslint .` passes with zero errors
-- [ ] `SESSION_LOG.md` updated with full session entry and phase-complete status in Current State block
+- [x] `generate(DEFAULT_CONFIG)` returns without throwing
+- [x] Output `files` array contains all paths from `docs/design-system-spec.md` § Output Artifacts — assert each of: `tokens/primitives.json`, `tokens/semantic.json`, `tokens/component.json`, `tokens/variables.css`, `tokens/tailwind.config.ts`, `components/index.ts`, `docs/README.md`, `docs/tokens.md`, `docs/components.md`, `docs/decisions.md`, `docs/agent-spec.json`, `.design-system-meta.json`
+- [x] All three W3C JSON files parse with `JSON.parse` and contain `$value`/`$type` keys
+- [x] `tokens/variables.css` content contains a `:root {` block
+- [x] `tokens/tailwind.config.ts` content passes `tsc --noEmit` (write to temp directory and compile)
+- [x] All component `.tsx` files in the output pass `tsc --noEmit` (write all to one temp directory with a shared tsconfig and run the compiler once)
+- [x] `docs/agent-spec.json` parses as valid JSON with all required top-level keys
+- [x] No generated file content contains any of: `'TODO'`, `'FIXME'`, `'placeholder'`, `'console.log'`
+- [x] **WCAG check:** for every semantic foreground/background pair in the output, `contrastRatio(fg, bg) >= 4.5` (text) or `>= 3.0` (UI components) — assert programmatically
+- [x] `generate(DEFAULT_CONFIG)` completes in under 200ms — measure with `performance.now()` before and after the call and assert
+- [x] `generate` with full config (all six `componentScope` categories, `modes: ['light', 'dark']`) completes in under 200ms
+- [x] `generate` is deterministic: two calls with identical config produce output where every file's content is identical — assert with deep-equal on the `files` array
+- [x] **Parameterized test:** `generate` runs without errors for all four `typeStyle` values (`geometric`, `humanist`, `serif-accented`, `monospace-accented`), both `colorSource` values (`provided` with a valid hex, `generated`), and all three `density` values (`compact`, `balanced`, `spacious`)
+- [x] `generate` has no side effects — it does not log to stdout, does not call `fs`, does not make network calls — verify by asserting `console.log` was not called (spy on it before and after the call)
+- [x] All tests pass: `cd backend && npm test`
+- [x] `tsc --noEmit` passes in `packages/types` and `backend` with zero errors
+- [x] `eslint .` passes with zero errors
+- [x] `SESSION_LOG.md` updated with full session entry and phase-complete status in Current State block
 
 **Must not do:**
 - Must not implement any API routes — those are Phase 1

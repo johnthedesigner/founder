@@ -9,14 +9,14 @@
 ## Phase 0 — Pipeline Foundation
 The generation pipeline: color scale generation (OKLCH), WCAG contrast validation and auto-correction, primitive/semantic/component token generation, component code generation for all Tier 1 and Tier 2 components, documentation generation (README, tokens reference, components reference, decisions rationale, agent spec), W3C DTCG JSON serialization, CSS custom property serialization, Tailwind config generation, ZIP assembly. No server, no database, no frontend — only pure TypeScript functions and unit tests.
 
-**Status:** Not started ← current
+**Status:** Complete
 
 ---
 
 ## Phase 1 — Backend and Auth
 Express server, Postgres schema, migrations, auth system (email/password registration, email verification, login, session management, password reset), project CRUD API, generation export endpoints (JSON manifest and ZIP stream), agent API endpoint, CLI manifest endpoint. Frontend stub: login page, home page, project list via API.
 
-**Status:** Not started
+**Status:** Not started ← current
 
 ---
 

@@ -183,7 +183,136 @@ No manual schema edits. Every schema change is a migration file in `backend/src/
 
 ## Patterns established
 
-*(This section is empty at project start. Add patterns here as they are discovered during development. Each pattern entry should include: what the pattern is, why it was established, and an example of correct usage.)*
+### cva v1 API — single config object
+
+cva v1.0.0-beta.4 uses a single config object, not the two-argument form from v0.x.
+
+```typescript
+// correct (v1)
+const buttonVariants = cva({
+  base: 'inline-flex items-center ...',
+  variants: { variant: { primary: '...', secondary: '...' } },
+  defaultVariants: { variant: 'primary' },
+})
+
+// wrong (v0 — will produce TypeScript error "Expected 1 argument, got 2")
+const buttonVariants = cva('inline-flex items-center ...', { variants: ... })
+```
+
+Established because: the first attempt at the Button generator used the v0 form and failed `tsc --noEmit` on the generated output.
+
+---
+
+### Base UI className override — Omit + re-declare
+
+Base UI's `className` prop is typed as `string | ((state: State) => string | undefined)`. Our `cn()` helper only accepts `string | undefined | null | false`. When a generated component wraps a Base UI primitive and calls `cn()` with `className`, use `Omit + intersection` to override:
+
+```typescript
+// In the .types.ts file for any component wrapping a Base UI primitive with className:
+export interface CheckboxProps
+  extends Omit<React.ComponentPropsWithoutRef<typeof CheckboxPrimitive.Root>, 'className'> {
+  label?: string
+  className?: string
+}
+```
+
+Established because: without this, `tsc --noEmit` on generated output fails with "Type 'string | ((state: CheckboxRootState) => string | undefined) | undefined' is not assignable to type 'string | undefined'."
+
+---
+
+### Base UI ButtonProps — extend ButtonHTMLAttributes, not ComponentPropsWithoutRef
+
+`@base-ui-components/react/button` exports `ButtonProps = ButtonNativeProps | ButtonNonNativeProps` — a discriminated union. TypeScript does not allow `interface Foo extends AUnionType`. Use `ButtonHTMLAttributes<HTMLButtonElement>` instead:
+
+```typescript
+// correct
+export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: ButtonVariant
+  size?: ButtonSize
+}
+
+// wrong — TypeScript error: "An interface can only extend an object type or intersection of object types with statically known members"
+export interface ButtonProps extends ComponentPropsWithoutRef<typeof BaseButton> { ... }
+```
+
+---
+
+### InterimSystem pattern — break the doc-generator chicken-and-egg
+
+Doc generators (`generateReadme`, `generateTokensDoc`, etc.) take `GeneratedSystem` as input, but docs are files in `GeneratedSystem.files`. Break the cycle by building an interim system with `files: []`, using it for docs, then assembling the final system:
+
+```typescript
+const interimSystem: GeneratedSystem = {
+  config, tokens, components,
+  files: [],   // empty — doc generators don't need the files array
+  metadata: { generatedAt, corrections: semantic.corrections },
+}
+const docFiles = [
+  { path: 'docs/README.md', content: generateReadme(interimSystem, config) },
+  ...
+]
+// then assemble final return value with all files included
+```
+
+Established in Task 0.10 to avoid any circular dependency between docs and the system they describe.
+
+---
+
+### W3C alias detection regex
+
+Token path references (e.g. `'color.action.primary'`, `'space.component.sm'`) are detected with:
+
+```typescript
+const isAlias = (v: string) => /^[a-z][\w-]*(\.[a-z][\w-]+)+$/.test(v)
+```
+
+This matches `word.word` patterns but not CSS values (`4px`, `#3b82f6`, `Inter, sans-serif`). False positives are acceptable in the component token layer because all component token values are intentionally in this form.
+
+---
+
+### vi.setSystemTime for determinism tests
+
+`generate()` calls `new Date().toISOString()` for `generatedAt`. Pin the clock in tests that need byte-for-byte output comparison:
+
+```typescript
+vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
+const a = generate(DEFAULT_CONFIG)
+const b = generate(DEFAULT_CONFIG)
+vi.useRealTimers()
+// now a and b are identical
+```
+
+Do not change the production code to accept an injected clock — use `vi.setSystemTime` in tests only.
+
+---
+
+### Two tsconfigs for output compilation tests
+
+Component `.tsx` files require `jsx: react-jsx`; `tokens/tailwind.config.ts` does not (and mixing them causes errors). Write two separate tsconfig files to the output directory and run `tsc` twice:
+
+```typescript
+// tsconfig.json — for components
+{ compilerOptions: { jsx: 'react-jsx', ... }, include: ['components/**/*.tsx'] }
+
+// tsconfig.tailwind.json — for tailwind config
+{ compilerOptions: { ... }, include: ['tokens/tailwind.config.ts'] }
+```
+
+Established in Task 0.10 integration test. This is the correct solution, not a workaround.
+
+---
+
+### Tier 2 components are pure HTML — no Base UI import
+
+Card, Badge, Alert, and Avatar are purely structural. They use plain HTML elements and do not import `@base-ui-components/react`. Tests that check for Base UI imports in generated component files must exclude these four with an explicit allowlist:
+
+```typescript
+const PURE_HTML_COMPONENTS = ['card', 'badge', 'alert', 'avatar']
+const interactiveFiles = allFiles().filter(
+  (f) => f.path.endsWith('.tsx') &&
+         !PURE_HTML_COMPONENTS.some((name) => f.path.includes(`/${name}/`))
+)
+```
 
 ---
 
