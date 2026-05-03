@@ -107,11 +107,13 @@ If tests fail or an acceptance criterion cannot be met, document the blocker in 
 ├── frontend/
 │   ├── src/
 │   │   ├── components/
+│   │   │   ├── auth/
 │   │   │   ├── flow/
 │   │   │   ├── preview/
 │   │   │   ├── home/
 │   │   │   └── shared/
 │   │   ├── store/
+│   │   │   ├── anonymousStore.ts
 │   │   │   ├── configStore.ts
 │   │   │   ├── uiStore.ts
 │   │   │   └── userStore.ts
@@ -313,6 +315,113 @@ const interactiveFiles = allFiles().filter(
          !PURE_HTML_COMPONENTS.some((name) => f.path.includes(`/${name}/`))
 )
 ```
+
+---
+
+### `optionalAuth` — serve both authenticated and anonymous callers on the same route
+
+When a route should behave differently for authenticated vs. anonymous callers but must never block anonymous access, use `optionalAuth` instead of `requireAuth`:
+
+```typescript
+export async function optionalAuth(req, _res, next) {
+  const token = req.cookies?.session
+  if (token) {
+    try {
+      const payload = verifyJwt(token)
+      const session = await findSessionByJti(payload.jti)
+      if (session) {
+        await updateSessionLastActive(payload.jti)
+        req.user = { id: payload.sub, jti: payload.jti }
+      }
+    } catch { /* invalid token — proceed as anonymous */ }
+  }
+  next()
+}
+```
+
+Route handler then inspects `req.user` to determine capability, not access. Established in Phase 1b for `POST /projects`, `PATCH /:id`, `DELETE /:id`.
+
+---
+
+### Ownership checks live in the service layer — routes pass raw auth context
+
+The service (not the route handler) determines whether a caller can edit a resource. Routes extract a plain `EditAuth` object from the request and pass it through:
+
+```typescript
+// In the route:
+function extractEditAuth(req): EditAuth | null {
+  if (req.user) return { type: 'user', userId: req.user.id }
+  const token = req.headers['x-owner-token']
+  if (typeof token === 'string' && token.length > 0) return { type: 'token', ownerToken: token }
+  return null
+}
+
+// In the service:
+function computeCanEdit(row, auth?) {
+  if (!auth) return false
+  if (auth.userId && row.user_id === auth.userId) return true
+  if (auth.ownerToken && row.owner_token !== null && auth.ownerToken === row.owner_token) return true
+  return false
+}
+```
+
+Routes never compare tokens directly against DB rows. The service owns the ownership model. Established in Phase 1b.
+
+---
+
+### `'key' in data` for nullable column updates — distinguish "don't touch" from "set to NULL"
+
+When a DB update function needs to differentiate "caller didn't provide this field" from "caller explicitly wants to set it to NULL", use key-presence checking:
+
+```typescript
+function buildSetClause(data) {
+  const sets = []
+  if ('ownerToken' in data) {
+    sets.push(data.ownerToken === null ? `owner_token = NULL` : `owner_token = $N`)
+  }
+  // vs.
+  if (data.name !== undefined) sets.push(`name = $N`) // never null
+}
+```
+
+Established in Phase 1b for the claim operation, which needs to explicitly clear `owner_token` to NULL while other `updateProject` callers leave it untouched.
+
+---
+
+### Vite proxy `bypass` for SPA routes that overlap proxied paths
+
+If a Vite proxy path (e.g. `/projects`) also matches SPA routes rendered by React Router, browser page navigations will be forwarded to the backend and receive JSON instead of `index.html`. Add a `bypass` function:
+
+```typescript
+'/projects': {
+  target: 'http://localhost:3001',
+  bypass: (req) => {
+    if (req.headers.accept?.includes('text/html')) return '/index.html'
+  },
+},
+```
+
+Browser navigations send `Accept: text/html`; fetch/XHR API calls do not. The bypass returns `/index.html` only for browser navigations, letting API calls proxy through normally. Established in Phase 1b when `page.goto('/projects/:id')` in Playwright returned raw JSON.
+
+---
+
+### Playwright localStorage seeding — `page.evaluate` not `page.addInitScript`
+
+To seed `localStorage` for a Zustand `persist` store before a page navigation:
+
+```typescript
+// 1. Navigate to any app page to establish the origin
+await page.goto('/login')
+// 2. Write the Zustand persist format
+await page.evaluate(({ key, value }) => localStorage.setItem(key, value), {
+  key: 'ds-gen-anonymous',
+  value: JSON.stringify({ state: { entries: [...] }, version: 0 }),
+})
+// 3. Navigate to the target page — store hydrates from localStorage on mount
+await page.goto('/projects/' + id)
+```
+
+Do NOT use `page.addInitScript` for this — it re-runs the script on every subsequent navigation, which breaks tests that need to clear localStorage and reload (the script would re-seed after the clear). `page.evaluate` writes once; localStorage persists naturally across same-origin navigations. Established in Phase 1b.
 
 ---
 

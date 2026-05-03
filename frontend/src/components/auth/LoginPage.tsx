@@ -3,14 +3,18 @@ import { useNavigate, Link } from 'react-router-dom'
 import { login } from '../../api/auth'
 import { ApiResponseError } from '../../api/client'
 import { useUserStore } from '../../store/userStore'
+import { useAnonymousStore } from '../../store/anonymousStore'
+import { ClaimPrompt } from './ClaimPrompt'
 
 export function LoginPage() {
   const navigate = useNavigate()
   const fetchUser = useUserStore((s) => s.fetchUser)
+  const anonymousEntries = useAnonymousStore((s) => s.entries)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [showClaim, setShowClaim] = useState(false)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -19,7 +23,11 @@ export function LoginPage() {
     try {
       await login(email, password)
       await fetchUser()
-      void navigate('/')
+      if (anonymousEntries.length > 0) {
+        setShowClaim(true)
+      } else {
+        void navigate('/')
+      }
     } catch (err) {
       if (err instanceof ApiResponseError) {
         setError(err.body.error)
@@ -30,6 +38,8 @@ export function LoginPage() {
       setSubmitting(false)
     }
   }
+
+  if (showClaim) return <ClaimPrompt />
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">

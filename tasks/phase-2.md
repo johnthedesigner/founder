@@ -1,418 +1,453 @@
 # Phase 2 — Creation Flow
 
-> **Status:** Not started
-> **Depends on:** Phase 1 complete (all tasks marked `[x]`, 251 backend tests + 3 Playwright tests passing)
-> **Reference:** `docs/design-system-dev-plan.md` § Phase 2 — Creation Flow
+> **Status:** Complete ✓
+> **Depends on:** Phase 1b complete (all tasks `[x]`, 269 backend tests + 7 Playwright tests passing)
+> **Reference:** `docs/design-system-plan-summary.md` § Phase 2 — Creation Flow
 
 ---
 
 ## Overview
 
-The full four-stage creation flow is implemented. Users can choose a project type, set color direction, tune personality axes, review a live preview of their design system, and download a ZIP — all without an account. The System Preview is a live iframe sandbox that updates within 500ms of any config change via postMessage. Anonymous users can complete the flow and download from Stage 4 via a new public export endpoint. This phase has one backend task (the anonymous export endpoint) and seven frontend tasks.
+The full four-stage creation flow and live System Preview. A user who arrives at `/new` immediately sees a rendered design system. Every choice they make updates the preview within 500ms. At Stage 4, the project is saved anonymously and a shareable URL is presented. The user can download a ZIP without an account.
+
+The creation flow reads from and writes to `configStore`. The System Preview is a separate Vite application (`preview-sandbox/`) that runs in an iframe and communicates via `postMessage`. Config is persisted to `localStorage` for anonymous users so a page refresh does not lose progress.
+
+This phase has seven tasks: the preview sandbox, the flow shell and SystemPreview wrapper, Stages 1–4, and Playwright tests. Phase 3 will wire in account creation and auto-save; this phase focuses on making the flow complete and downloadable for anonymous users.
 
 ---
 
 ## Tasks
 
-### Task 2.1 — Anonymous export endpoint
+### Task 2.1 — Preview sandbox
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Session:** —
-> **Depends on:** none (Phase 1 complete)
+> **Depends on:** Phase 1b complete
 
 **What this task implements:**
-A new public backend route `POST /api/v1/export` that accepts a `ProjectConfig` body and returns a ZIP download. No authentication required. This is the endpoint Stage 4 uses for anonymous users.
+The `preview-sandbox/` Vite application — a separate build that runs inside an iframe in the main app. It listens for `CONFIG_UPDATE` postMessage events, applies generated CSS custom properties to `:root`, and renders a live component strip that reacts immediately to config changes.
 
-**Files to create or modify:**
-- `backend/src/api/generate.ts` — add `POST /` route to `agentRouter` (or a new `publicExportRouter`); Zod-validate the request body against `ProjectConfigSchema`; call `generate(config)`; stream the ZIP
-- `backend/src/app.ts` — mount the new route (if using a separate router)
-- `backend/tests/api/generate.test.ts` — add tests for the new route
+**Files to create:**
+- `preview-sandbox/package.json` — standalone Vite app; deps: React, Base UI (`@base-ui-components/react`), `@ds-gen/types`
+- `preview-sandbox/index.html` — minimal entry point
+- `preview-sandbox/vite.config.ts` — builds to `preview-sandbox/dist/`; base: `/preview/`
+- `preview-sandbox/src/main.tsx` — sets up message listener; renders `<TokenApplicator />`
+- `preview-sandbox/src/generatePreviewTokens.ts` — converts `ProjectConfig` to a CSS string with `:root { --token-name: value; ... }`
+- `preview-sandbox/src/TokenApplicator.tsx` — writes generated CSS to a `<style id="ds-preview-tokens">` on `:root`; re-renders `SystemPreviewLayout` when config changes
+- `preview-sandbox/src/SystemPreviewLayout.tsx` — the visible preview: color palette strips, type scale, component strip, spacing swatches
+
+**postMessage protocol:**
+- Sandbox → parent (on mount): `{ type: 'READY' }`
+- Parent → sandbox: `{ type: 'CONFIG_UPDATE', config: ProjectConfig }`
+- Sandbox processes `CONFIG_UPDATE`: calls `generatePreviewTokens(config)`, writes CSS to `<style>` tag, re-renders layout
+
+**`generatePreviewTokens(config: ProjectConfig): string`:**
+Returns a CSS string: `:root { ... }` containing all CSS custom properties needed to style the preview. Must produce at minimum:
+- `--color-primary-{50,100,200,...,950}` — primary hue color scale from `config.color`
+- `--color-neutral-{50,100,...,950}` — neutral scale from `config.color.neutralFamily`
+- `--font-display`, `--font-body`, `--font-code` — from `config.typography` type style
+- `--font-scale-ratio` — from `config.typography.scaleRatio`
+- `--spacing-base` — from `config.shape.density` (compact=3px, balanced=4px, spacious=5px)
+- `--radius-sm`, `--radius-md`, `--radius-lg`, `--radius-full` — from `config.shape.personality`
+- `--shadow-sm`, `--shadow-md`, `--shadow-lg` — from `config.shape.dimensionality` (flat → all `none`)
+
+Color scale generation: derive from `config.color.primaryHex` if `source === 'provided'`, or from the preset hex for the `colorDirection` if `source === 'generated'`. Use the same OKLCH algorithm that the server pipeline uses — the pipeline functions are pure TypeScript with no Node.js APIs, so they are importable in the browser from `../../backend/src/pipeline/palette/`. Use a Vite alias or relative import; confirm `tsc --noEmit` still passes.
+
+**`SystemPreviewLayout.tsx`:**
+Shows four sections, each using CSS custom properties via `var(--token-name)`:
+1. **Color strip** — primary scale swatches (50–950) as horizontal color chips, labeled with the step number
+2. **Type scale** — one line of text per scale step rendered at its actual size, labeled "display-lg / 32px" etc.
+3. **Component strip** — Button (primary + secondary variants, md size), a labeled input field, a Badge (primary variant)
+4. **Radius swatches** — four squares showing sm/md/lg/full
+
+All elements must use CSS custom properties. No hardcoded color values in the component code.
+
+**`vite.config.ts` for the main frontend:**
+Serve the preview sandbox dist during dev. Add:
+```typescript
+server: {
+  proxy: {
+    '/preview': { target: 'http://localhost:5174', ... }  // preview-sandbox dev server
+  }
+}
+```
+For production, the preview dist is a static folder served by the frontend's static server. This wiring is for dev only.
 
 **Acceptance criteria:**
-- [ ] `POST /api/v1/export` with a valid `ProjectConfig` body returns HTTP 200 with `Content-Type: application/zip` and a non-empty ZIP
-- [ ] `POST /api/v1/export` with an invalid body returns HTTP 400 with a `{ error, issues }` JSON response
-- [ ] No `Authorization` header or session cookie is required
-- [ ] The ZIP contents match the shape returned by the existing authenticated `GET /projects/:id/export.zip` (same file tree)
-- [ ] Existing generate tests still pass — 0 regressions
-- [ ] `npm test` in `backend/` passes
-- [ ] `tsc --noEmit` in `backend/` passes
+- [ ] `cd preview-sandbox && npm run dev` — sandbox loads at `http://localhost:5174`
+- [ ] Opening the sandbox URL directly shows the default design system preview
+- [ ] Posting `{ type: 'CONFIG_UPDATE', config: { ...DEFAULT_CONFIG, color: { ...DEFAULT_CONFIG.color, primaryHex: '#e63946' } } }` from the browser console updates the color strip immediately
+- [ ] Setting `dimensionality: 'flat'` in a config update removes all shadow values from the CSS custom properties
+- [ ] `cd preview-sandbox && npm run build` — builds to `dist/` with no errors
+- [ ] `tsc --noEmit` in `preview-sandbox/` — zero errors
 - [ ] `SESSION_LOG.md` updated
 
 **Must not do:**
-- Must not require auth — this endpoint is explicitly public
-- Must not store anything in the database — it is stateless, config in → ZIP out
-- Must not modify the existing authenticated export routes
+- Must not make network requests inside `generatePreviewTokens` — it must run synchronously and offline
+- Must not render component code strings as text — the preview renders actual React components styled with CSS custom properties
+- Must not import from `backend/src/api/` or `backend/src/services/` — only pure pipeline functions are in scope
 
 ---
 
-### Task 2.2 — Preview sandbox Vite app
+### Task 2.2 — Creation flow shell + SystemPreview wrapper
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Session:** —
-> **Depends on:** none (Phase 1 complete)
+> **Depends on:** Task 2.1
 
 **What this task implements:**
-A separate Vite + React application in `preview-sandbox/` that renders a live preview of a design system. It listens for `CONFIG_UPDATE` postMessages, computes CSS custom properties via a client-side `generatePreviewTokens(config)` function, writes them to `:root`, and re-renders a `SystemPreviewLayout` component. Posts `{ type: 'READY' }` to the parent on mount.
+The `/new` page layout and navigation shell that hosts all four stages. The `SystemPreview` component wraps the preview sandbox iframe and manages the `postMessage` bridge. Config is persisted to `localStorage` so page refreshes preserve progress. The `uiStore` gains stage navigation state.
 
 **Files to create or modify:**
-- `preview-sandbox/package.json` — `@ds-gen/preview-sandbox`; deps: react, react-dom, `@ds-gen/types`; devDeps: vite, @vitejs/plugin-react, typescript
-- `preview-sandbox/tsconfig.json` — extends root tsconfig.base.json
-- `preview-sandbox/vite.config.ts` — builds to `preview-sandbox/dist/`; base: `/preview/` for production; dev port: 5174
-- `preview-sandbox/index.html` — Vite entry
-- `preview-sandbox/src/main.tsx` — React entry, mounts `<PreviewApp />`
-- `preview-sandbox/src/PreviewApp.tsx` — posts `READY` on mount; listens for `CONFIG_UPDATE`; calls `generatePreviewTokens`; writes CSS vars to a `<style>` tag; renders `<SystemPreviewLayout />`
-- `preview-sandbox/src/generatePreviewTokens.ts` — maps `ProjectConfig` → `Record<string, string>` of CSS custom properties; covers color palette, typography font families and scale ratio, spacing scale (base unit derived from density), border radius (from personality), box-shadow (from dimensionality)
-- `preview-sandbox/src/SystemPreviewLayout.tsx` — renders the preview content using CSS custom properties: a color swatch row for the primary scale (7 swatches from lightest to darkest), a type scale sample (4 sizes rendered at their sizes), a Button component strip (default, primary, ghost variants), a Card with a FormField inside
+- `frontend/src/components/preview/SystemPreview.tsx` — new component: iframe + bridge
+- `frontend/src/components/NewProjectPage.tsx` — rewrite from stub; the stage layout shell
+- `frontend/src/store/configStore.ts` — add `localStorage` persistence and `setProjectName`
+- `frontend/src/store/uiStore.ts` — add `projectName: string`, `setProjectName`, `canAdvance: boolean`, `setCanAdvance`
 
-**`generatePreviewTokens` contract:**
-Produces a flat `Record<string, string>`. Key CSS vars it must include:
-- `--color-primary`: primary hex from config
-- `--color-primary-light`: lightened version (for backgrounds)
-- `--color-primary-dark`: darkened version (for hover states)
-- `--color-surface`: background surface color (`#ffffff` for light mode)
-- `--color-text`: primary text color (`#111827` for light mode)
-- `--color-text-muted`: secondary text color
-- `--font-display`: display font family string (e.g., `'Fraunces', Georgia, serif`)
-- `--font-body`: body font family string
-- `--font-scale-ratio`: type scale ratio as a unitless number
-- `--spacing-base`: base spacing unit in px (3px compact / 4px balanced / 5px spacious)
-- `--radius-sm`: small radius (0 flat / 4px subtle / 8px dimensional-like personality-driven)
-- `--radius-md`: medium radius
-- `--shadow-sm`: box-shadow value (none for flat / soft for subtle / pronounced for dimensional)
+**`SystemPreview.tsx`:**
+```typescript
+// Props: none. Reads configStore directly.
+export function SystemPreview() {
+  // 1. Creates an <iframe src="/preview/index.html" />
+  // 2. On mount, listens for { type: 'READY' } from the iframe; sets ready=true
+  // 3. Subscribes to configStore; on change, debounces 50ms,
+  //    posts { type: 'CONFIG_UPDATE', config } to iframe.contentWindow
+  // 4. While !ready, shows a skeleton placeholder (grey boxes matching the layout)
+  // 5. If READY is not received within 3s, shows a static fallback (simple color strip)
+}
+```
 
-`generatePreviewTokens` is a simplified approximation — it does not call the server pipeline and does not need to produce values identical to `generate(config)`. Accuracy matters less than responsiveness.
+**`NewProjectPage.tsx` shell:**
+- Two-column layout: left column = stage content, right column = `SystemPreview` (sticky, full height)
+- Stage progress indicator at the top: four labeled steps (Foundation, Style, Review, Export); current step is highlighted
+- Renders `<Stage1 />`, `<Stage2 />`, `<Stage3 />`, or `<Stage4 />` based on `uiStore.currentStage`
+- Back button (disabled on Stage 1): calls `uiStore.goBack()`
+- Continue button: disabled when `!uiStore.canAdvance`; calls `uiStore.advance()`
+- Stage 1 advance condition: `config.projectType` is set (always true, since it has a default)
+- Stage 2 advance condition: all four axes have values (always true, since all have defaults)
+- Stage 3 advance condition: `uiStore.projectName.trim().length > 0`
+- Stage 4: no Continue button (final stage); Back button still works
 
-**Font families by TypeStyle:**
-| TypeStyle | display | body |
-|---|---|---|
-| geometric | `'Inter', sans-serif` | `'Inter', sans-serif` |
-| humanist | `'Plus Jakarta Sans', sans-serif` | `'Inter', sans-serif` |
-| serif-accented | `'Fraunces', Georgia, serif` | `'Inter', sans-serif` |
-| monospace-accented | `'Inter', sans-serif` | `'JetBrains Mono', monospace` |
+**`configStore.ts` updates:**
+- On store init, read `localStorage['ds-gen-flow-config']` (if present and valid JSON matching `ProjectConfigSchema`); initialize store from it
+- On every `setConfig` call, write updated config back to `localStorage['ds-gen-flow-config']`
+- Add `resetConfig()` that also clears `localStorage['ds-gen-flow-config']`
+
+**`uiStore.ts` updates:**
+- Add: `projectName: string` (default `'My Design System'`), `setProjectName(name: string)`
+- Add: `canAdvance: boolean` (default `true`), `setCanAdvance(v: boolean)` — set by each stage component
+- Add: `advance()` — increments `currentStage` (max 3), `goBack()` — decrements (min 0)
+- Keep existing `currentStage`, `isSaving`, `lastSavedAt`
+
+**`App.tsx`:** Route `/new` must no longer require auth. Remove any auth guard on `/new`.
 
 **Acceptance criteria:**
-- [ ] `cd preview-sandbox && npm run dev` starts a Vite dev server on port 5174 without errors
-- [ ] `cd preview-sandbox && npm run build` produces a `dist/` directory
-- [ ] Navigating to `http://localhost:5174` in a browser shows the `SystemPreviewLayout` with a colored swatch row, type samples, and a Button strip
-- [ ] Opening the browser console and running `window.postMessage({ type: 'CONFIG_UPDATE', config: {...} }, '*')` with a modified primaryHex causes the swatch color to update
-- [ ] `READY` message is posted to `window.parent` on mount (verifiable via parent window `message` listener)
-- [ ] `tsc --noEmit` in `preview-sandbox/` passes
+- [ ] Navigating to `/new` without being logged in shows the creation flow (no redirect to `/login`)
+- [ ] Four-stage progress indicator renders; current stage is visually distinct
+- [ ] "Continue" advances to the next stage; "Back" goes back
+- [ ] `SystemPreview` iframe renders (loading skeleton while preview sandbox initializes; actual preview once READY received)
+- [ ] Changing config via `setConfig` in the browser console triggers a `CONFIG_UPDATE` postMessage to the iframe within 100ms (verify via `window.addEventListener('message', ...)` in iframe)
+- [ ] Refreshing `/new` mid-flow restores the config from `localStorage`
+- [ ] `tsc --noEmit` in `frontend/`: zero errors
 - [ ] `SESSION_LOG.md` updated
 
 **Must not do:**
-- Must not make network requests to the backend API — all preview logic is client-side
-- Must not use Zustand, React Router, or other frontend app dependencies — the sandbox is intentionally minimal
-- Must not implement full WCAG contrast calculation — that is in Stage 1 (Task 2.5)
+- Must not add auth guard to the `/new` route — the creation flow is fully anonymous
+- Must not store `projectName` in `configStore` — it's UI/flow state, not generation config. `projectName` lives in `uiStore`.
 
 ---
 
-### Task 2.3 — `SystemPreview` component
+### Task 2.3 — Stage 1: Foundation
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Session:** —
 > **Depends on:** Task 2.2
 
 **What this task implements:**
-A `SystemPreview` React component in the main frontend that wraps the preview sandbox in an iframe. It reads `configStore` and bridges config changes to the sandbox via postMessage with a 50ms debounce. It shows a loading skeleton until the `READY` message is received. It shows a static fallback if the iframe fails to load.
+The complete Stage 1 UI: project type selection, scope chips with customize disclosure, brand asset input (starting fresh vs. provided), color direction selection, and light/dark mode selection. All choices update `configStore` and the System Preview reacts within 500ms.
 
-**Files to create or modify:**
-- `frontend/src/components/preview/SystemPreview.tsx` — the iframe wrapper component
-- `frontend/src/components/preview/SystemPreviewSkeleton.tsx` — loading skeleton (grey shimmer blocks approximating the layout)
-- `frontend/src/components/preview/SystemPreviewFallback.tsx` — static fallback (shown if `READY` is not received within 5s or iframe errors)
-- `frontend/.env.example` — add `VITE_PREVIEW_URL=http://localhost:5174`
-- `frontend/vite.config.ts` — no change needed; iframe loads independently
+**Files to create:**
+- `frontend/src/components/flow/Stage1.tsx` — main Stage 1 component
+- `frontend/src/components/flow/Stage1ProjectType.tsx` — three project type selection cards
+- `frontend/src/components/flow/Stage1BrandAssets.tsx` — brand assets toggle + optional inputs
+- `frontend/src/components/flow/Stage1ColorDirection.tsx` — five color direction cards (starting fresh only)
+- `frontend/src/components/flow/Stage1ModeSelect.tsx` — three-option mode selection
 
-**`SystemPreview` component behavior:**
-- Renders `<iframe src={previewUrl} />` where `previewUrl` is `import.meta.env.VITE_PREVIEW_URL ?? 'http://localhost:5174'`
-- On mount: attaches a `window.message` listener; listens for `{ type: 'READY' }`; on receipt, sets `ready = true` and clears the skeleton
-- If `READY` not received within 5 seconds: shows the fallback instead of skeleton
-- Subscribes to `configStore` via `useEffect`; on any config change, debounces 50ms then calls `iframeRef.current.contentWindow.postMessage({ type: 'CONFIG_UPDATE', config }, '*')`
-- On unmount: cleans up message listener and debounce timer
+**Scope defaults by project type** (from spec):
+```typescript
+const SCOPE_DEFAULTS: Record<ProjectType, ComponentCategory[]> = {
+  saas:       ['forms', 'navigation', 'overlays', 'feedback', 'data-display', 'layout'],
+  marketing:  ['forms', 'navigation', 'feedback', 'layout'],
+  mobile:     ['forms', 'navigation', 'feedback', 'layout'],
+}
+```
+
+**Color direction → `primaryHex` mapping:**
+```typescript
+const COLOR_DIRECTION_HEX: Record<ColorDirection, string> = {
+  'cool-professional':    '#3b82f6',
+  'warm-approachable':    '#f59e0b',
+  'bold-high-contrast':   '#dc2626',
+  'neutral-minimal':      '#6b7280',
+  'earth-tones':          '#92400e',
+}
+```
+
+**Stage 1 behavior:**
+- Project type card selection: calls `setConfig({ projectType, componentScope: SCOPE_DEFAULTS[projectType] })`
+- Scope chips: each chip shows a category. "Customize" expands a checklist; toggling a chip calls `setConfig({ componentScope: [...updated] })`. At least 1 category must remain selected.
+- Brand assets toggle: choosing "I have brand assets" sets `config.color.source = 'provided'` and reveals hex + typeface inputs. Hex input validates against the `#RRGGBB` pattern; on valid input, calls `setConfig({ color: { ...color, primaryHex: hex, source: 'provided' } })`. Choosing "Starting fresh" resets to `source: 'generated'` and shows the color direction cards.
+- Color direction cards (starting fresh): on select, calls `setConfig({ color: { ...color, colorDirection: dir, primaryHex: COLOR_DIRECTION_HEX[dir] } })`
+- Mode selection: on select, calls `setConfig({ modes: selection })`
+- Each change triggers preview update automatically via the `configStore` → `SystemPreview` subscription
 
 **Acceptance criteria:**
-- [ ] `SystemPreview` renders an iframe and a skeleton simultaneously until `READY` is received, then hides the skeleton
-- [ ] Changing any field in `configStore` (verified via `configStore.getState().setConfig(...)` in the browser console) causes a `CONFIG_UPDATE` postMessage to be sent to the iframe within 50ms
-- [ ] If the iframe `src` is pointed at a non-existent URL, the fallback is shown after 5 seconds
-- [ ] No console errors when the component mounts and unmounts
-- [ ] `tsc --noEmit` in `frontend/` passes
+- [ ] Clicking "Marketing Site" updates the scope chips to show 4 categories (no Overlays, no Data Display)
+- [ ] Clicking "SaaS / Web App" restores 6 scope chips
+- [ ] "Customize" expands the checklist; unchecking a category removes its chip
+- [ ] Selecting "Warm & Approachable" color direction updates the System Preview primary color to amber within 500ms
+- [ ] "I have brand assets" reveals hex input; entering `#e63946` updates the System Preview primary color
+- [ ] Mode select shows three options; selecting "Both" shows a note that dual-mode tokens will be generated
+- [ ] `tsc --noEmit` in `frontend/`: zero errors
 - [ ] `SESSION_LOG.md` updated
 
 **Must not do:**
-- Must not poll the iframe — only respond to `message` events
-- Must not send a postMessage on every render — only on configStore changes
-- Must not hardcode the preview URL — it reads from `VITE_PREVIEW_URL`
+- Must not validate the hex input on every keypress — validate on blur or when the hex is a valid 6-digit value
+- Must not show the color direction cards when "I have brand assets" is selected — they are mutually exclusive
 
 ---
 
-### Task 2.4 — Creation flow shell
+### Task 2.4 — Stage 2: Style
 
-> **Status:** `[ ]` Not started
+> **Status:** `[x]` Complete
 > **Session:** —
 > **Depends on:** Task 2.3
 
 **What this task implements:**
-The creation flow navigation shell: a stage progress indicator, Back/Continue buttons, stage management in `uiStore`, and `localStorage` persistence of `configStore` for anonymous users. Updates `NewProjectPage.tsx` to use the shell with default config. Updates `ProjectPage.tsx` to load project config from the API and populate `configStore` before mounting the shell.
+Stage 2: four personality axis sections (Density, Personality, Type Style, Dimensionality). Each has a row of visual selection cards showing a label, visual character, and short description. Each axis has a "Customize" disclosure with fine-grained controls. All choices update `configStore`.
 
-**Files to create or modify:**
-- `frontend/src/components/creation/CreationFlow.tsx` — shell component; renders `StageProgress`, the current stage component (switching on `uiStore.currentStage`), and `StageNav`; stages 0–3 render placeholder `<div>Stage N</div>` until Tasks 2.5–2.8 replace them
-- `frontend/src/components/creation/StageProgress.tsx` — four numbered steps; current step highlighted; completed steps shown as done; clicking a completed step navigates back to it
-- `frontend/src/components/creation/StageNav.tsx` — Back button (hidden on stage 0) + Continue button; Continue button is disabled when `uiStore.canContinue` is false; clicking Continue increments `uiStore.currentStage`
-- `frontend/src/store/uiStore.ts` — add `canContinue: boolean`, `setCanContinue(v: boolean)`, `goToStage(n: number)`, `nextStage()`, `prevStage()` to existing store; `canContinue` defaults to `true` (stages 0 and 1 will override this)
-- `frontend/src/store/configStore.ts` — add localStorage sync: on every `setConfig` call, write the updated config to `localStorage['ds-gen-config']`; add `loadFromLocalStorage(): boolean` action that reads and validates the stored config (returns true if found + valid)
-- `frontend/src/components/NewProjectPage.tsx` — replace stub with: load from localStorage if present, otherwise set DEFAULT_CONFIG; mount `<CreationFlow />`
-- `frontend/src/components/ProjectPage.tsx` — replace stub with: call `GET /projects/:id` on mount; on success, call `configStore.setConfig(project.config)` and `uiStore.goToStage(0)`; render `<CreationFlow />`; on 404 or 403, redirect to `/`
+**Files to create:**
+- `frontend/src/components/flow/Stage2.tsx` — main Stage 2 component
+- `frontend/src/components/flow/Stage2AxisSection.tsx` — reusable axis section (label row + cards + customize disclosure)
+- `frontend/src/components/flow/Stage2AxisCard.tsx` — single visual option card with selected state
+- `frontend/src/components/flow/Stage2CustomizeDensity.tsx` — fine-grained density: base spacing unit input (1–8px) + derived scale preview
+- `frontend/src/components/flow/Stage2CustomizeTypography.tsx` — fine-grained type: font face inputs for display, body, code; scale ratio select
 
-**Acceptance criteria:**
-- [ ] Navigating to `/new` renders the shell with stage 1 of 4 highlighted in the progress indicator
-- [ ] Clicking "Continue" advances to the next stage; stage indicator updates
-- [ ] Clicking "Back" returns to the previous stage; stage indicator updates
-- [ ] "Back" is not shown on stage 1
-- [ ] Refreshing `/new` with a stored config in `localStorage['ds-gen-config']` preserves the config (stage resets to 1 — this is intentional for anonymous users)
-- [ ] Navigating to `/projects/:id` for a valid owned project loads that project's config into `configStore`
-- [ ] Navigating to `/projects/:id` for a non-existent or forbidden project redirects to `/`
-- [ ] `tsc --noEmit` in `frontend/` passes
-- [ ] `SESSION_LOG.md` updated
+**Axis card display values:**
 
-**Must not do:**
-- Must not implement any stage UI content in this task — stage components render `<div>Stage N placeholder</div>` until Tasks 2.5–2.8
-- Must not auto-save to the API in this task — auto-save is Phase 3
-- Must not implement the "Continue your work?" prompt for localStorage recovery — just silently apply the stored config
+_Density:_
 
----
+| Value | Label | Subtitle |
+|---|---|---|
+| `compact` | Compact | 3px base unit |
+| `balanced` | Balanced | 4px base unit (default) |
+| `spacious` | Spacious | 5px base unit |
 
-### Task 2.5 — Stage 1: Foundation
+_Personality:_
 
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Task 2.4
+| Value | Label | Subtitle |
+|---|---|---|
+| `professional` | Professional | Muted, clear hierarchy |
+| `approachable` | Approachable | Rounded, friendly |
+| `bold` | Bold | High contrast, assertive |
+| `minimal` | Minimal | Quiet, near-neutral |
 
-**What this task implements:**
-All four steps of Stage 1: project type selection with scope chips and Customize disclosure, brand assets toggle with hex inputs, color direction cards, and mode selection. All steps read from and write to `configStore`. The Continue button is disabled until a project type is selected and (if "I have brand assets" is selected) a valid 6-digit hex color is provided.
+_Type Style:_
 
-**Files to create or modify:**
-- `frontend/src/components/creation/stages/Stage1Foundation.tsx` — top-level stage component; renders all 4 steps in sequence; calls `uiStore.setCanContinue()` based on validation state
-- `frontend/src/components/creation/stages/stage1/ProjectTypeStep.tsx` — three selection cards (SaaS / Web App, Marketing Site, Mobile Web); on select, updates `configStore.projectType` and resets `componentScope` to the default for that type; renders scope chips row below; "Customize" toggle reveals a checklist of all 6 categories
-- `frontend/src/components/creation/stages/stage1/BrandAssetsStep.tsx` — toggle between "Starting fresh" and "I have brand assets"; "I have brand assets" reveals: primary hex input (required), secondary hex (optional), typeface name text input (optional); hex inputs validate format on blur and show inline error for invalid values; valid primary hex is written to `configStore.color.primaryHex` and `configStore.color.source = 'provided'`; "Starting fresh" sets `configStore.color.source = 'generated'`
-- `frontend/src/components/creation/stages/stage1/ColorDirectionStep.tsx` — five color swatch cards; visible only when `configStore.color.source === 'generated'`; each card shows a mini swatch strip with 5 color steps; on select, updates `configStore.color.colorDirection`; initial selection matches `DEFAULT_CONFIG.color.colorDirection`
-- `frontend/src/components/creation/stages/stage1/ModeStep.tsx` — three-option selection (Light only, Dark only, Both); on select, updates `configStore.modes`; initial selection is Light only
+| Value | Label | Subtitle |
+|---|---|---|
+| `geometric` | Geometric | Inter · 1.25× |
+| `humanist` | Humanist | Plus Jakarta Sans · 1.25× |
+| `serif-accented` | Serif-accented | Fraunces · 1.2× |
+| `monospace-accented` | Monospace-accented | JetBrains Mono · 1.333× |
 
-**Scope defaults by project type** (must match spec):
-| Category | saas | marketing | mobile |
-|---|---|---|---|
-| forms | ✓ | ✓ | ✓ |
-| navigation | ✓ | ✓ | ✓ |
-| overlays | ✓ | — | — |
-| feedback | ✓ | ✓ | ✓ |
-| data-display | ✓ | — | — |
-| layout | ✓ | ✓ | ✓ |
+Render each type card with its actual display font preloaded from Google Fonts (a `<link>` in `index.html` for Inter, Plus Jakarta Sans, Fraunces). The subtitle shows the font name and scale ratio.
 
-**Color direction → primaryHex mapping** (used when source = 'generated' and no brand color provided):
-| colorDirection | primaryHex |
-|---|---|
-| cool-professional | `#3b82f6` |
-| warm-approachable | `#f59e0b` |
-| bold-high-contrast | `#dc2626` |
-| neutral-minimal | `#6b7280` |
-| earth-tones | `#92400e` |
+_Dimensionality:_
 
-Selecting a color direction card updates both `configStore.color.colorDirection` and `configStore.color.primaryHex` to this mapping.
+| Value | Label | Subtitle |
+|---|---|---|
+| `flat` | Flat | No shadows, borders only |
+| `subtle` | Subtle | Soft shadows (default) |
+| `dimensional` | Dimensional | Pronounced depth |
 
-**WCAG warning for brand colors:**
-When a brand primary hex is entered and is valid, check its contrast ratio against white (`#ffffff`) in the component using the formula: relative luminance comparison. If contrast < 4.5:1, show an inline warning with suggested fix text ("This color may be hard to read on white backgrounds"). Do not block the user — the warning is advisory.
+**Axis → configStore mapping:**
+- Density → `config.shape.density`
+- Personality → `config.shape.personality`
+- Type Style → `config.typography.typeStyle`; also sets `displayFace`, `bodyFace`, `codeFace`, `scaleRatio` to the defaults for the selected style (see spec table)
+- Dimensionality → `config.shape.dimensionality`
 
-**Acceptance criteria:**
-- [ ] Clicking a project type card immediately updates the scope chips row to show the correct categories for that type
-- [ ] Toggling individual categories in the Customize checklist updates the chip row and `configStore.componentScope`
-- [ ] The Customize checklist prevents de-selecting all categories (at least 1 must remain checked)
-- [ ] Switching to "I have brand assets" shows the hex input; entering a valid 6-hex updates the preview within 500ms (via postMessage bridge from configStore change)
-- [ ] Entering a color with contrast ratio < 4.5:1 against white shows a WCAG warning message
-- [ ] Switching back to "Starting fresh" hides the hex inputs and shows the color direction cards
-- [ ] Selecting a color direction card updates the preview within 500ms
-- [ ] The Continue button is disabled when "I have brand assets" is selected and the hex input is empty or invalid
-- [ ] The Continue button is enabled as soon as a project type is selected and color input is valid (or "Starting fresh")
-- [ ] `tsc --noEmit` in `frontend/` passes
-- [ ] `SESSION_LOG.md` updated
-
-**Must not do:**
-- Must not implement the typeface name Google Fonts loading — that is deferred to Phase 3
-- Must not implement the "accept suggested alternative" WCAG fix flow — just show the warning
-- Must not validate WCAG for secondary/accent colors — only primary
-
----
-
-### Task 2.6 — Stage 2: Style
-
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Task 2.4
-
-**What this task implements:**
-Stage 2: four personality axis sections. Each section shows a row of visual selection cards. The selected card has a distinct visual state. Each section has a "Customize" disclosure that expands to show fine-grained controls (simplified for this phase). Selecting any card immediately updates `configStore.shape` and the live preview.
-
-**Files to create or modify:**
-- `frontend/src/components/creation/stages/Stage2Style.tsx` — top-level stage component; renders 4 axis sections; sets `uiStore.canContinue(true)` on mount (all axes have defaults, Continue is always enabled)
-- `frontend/src/components/creation/stages/stage2/AxisSection.tsx` — reusable component: takes axis name, description, options array, current value, onChange handler; renders option cards + "Customize" disclosure toggle
-- `frontend/src/components/creation/stages/stage2/DensityAxis.tsx` — wraps AxisSection for density (compact / balanced / spacious); each card shows a mini spacing scale visual
-- `frontend/src/components/creation/stages/stage2/PersonalityAxis.tsx` — wraps AxisSection for personality (professional / approachable / bold / minimal); each card shows a mini button + color swatch visual
-- `frontend/src/components/creation/stages/stage2/TypeStyleAxis.tsx` — wraps AxisSection for typeStyle (geometric / humanist / serif-accented / monospace-accented); each card renders a sample text line in the actual typeface (loaded via Google Fonts `<link>` on mount)
-- `frontend/src/components/creation/stages/stage2/DimensionalityAxis.tsx` — wraps AxisSection for dimensionality (flat / subtle / dimensional); each card shows a mini card silhouette with appropriate shadow treatment
-
-**Customize disclosure contents (simplified — full controls are Phase 3):**
-- Density: numeric input for base spacing unit (1–8px); on change, write to a non-schema field or show as informational only (not stored in `ProjectConfig` — density maps to base unit at pipeline time)
-- Personality, TypeStyle, Dimensionality: show a text note "Deep customization coming in a future release." The disclosure opens and closes but has no functional inputs.
-
-**Acceptance criteria:**
-- [ ] All four axis sections render with the current config values pre-selected
-- [ ] Selecting a different Density card updates `configStore.shape.density`; preview updates within 500ms
-- [ ] Selecting a different Personality card updates `configStore.shape.personality`; preview updates within 500ms
-- [ ] Selecting a different TypeStyle card updates `configStore.typography.typeStyle` and the font family vars; preview updates within 500ms
-- [ ] Selecting a different Dimensionality card updates `configStore.shape.dimensionality`; preview updates within 500ms
-- [ ] Each TypeStyle card renders sample text in the correct typeface (Google Fonts loaded)
-- [ ] Clicking "Customize" on any axis expands the disclosure; clicking again collapses it
-- [ ] Continue button is always enabled on Stage 2
-- [ ] `tsc --noEmit` in `frontend/` passes
-- [ ] `SESSION_LOG.md` updated
-
-**Must not do:**
-- Must not implement fine-grained custom color palette editing in the Personality disclosure — stub it out with a "coming soon" note
-- Must not implement custom typeface upload — stub the disclosure
-
----
-
-### Task 2.7 — Stage 3: Review
-
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Task 2.4, Task 2.3
-
-**What this task implements:**
-Stage 3: the full System Preview in the primary content area, a collapsible token summary section, and the project name input. The Continue button is disabled until a non-empty project name is entered. For logged-in users viewing an existing project, the project name input pre-fills from the project record.
-
-**Files to create or modify:**
-- `frontend/src/components/creation/stages/Stage3Review.tsx` — top-level stage component; renders `<SystemPreview />` at full width, then `<TokenSummary />`, then `<ProjectNameInput />`; calls `uiStore.setCanContinue(false)` on mount; re-enables Continue when project name is non-empty
-- `frontend/src/components/creation/stages/stage3/TokenSummary.tsx` — collapsible sections: Primitives (color scale swatches), Semantic tokens (named semantic color assignments), Shape tokens (spacing/radius/shadow values); each section has a toggle; values displayed as colored swatches or formatted text; no network calls — derives display values from `configStore` using the same mapping as `generatePreviewTokens`
-- `frontend/src/components/creation/stages/stage3/ProjectNameInput.tsx` — controlled text input; default value "My Design System"; writes to `configStore` via a new `projectName` field (see note below) or to `uiStore`; on change, calls `uiStore.setCanContinue(name.trim().length > 0)`
-
-**Project name storage:**
-`ProjectConfig` does not include a project name field (it is a pure design spec). The project name is stored separately — either in `uiStore.projectName: string` (for the creation flow) or in the project record from the API. For Phase 2, store it in `uiStore` only. It is posted to `POST /projects` in Phase 3.
-
-**Token summary display values:**
-The token summary does not call the backend. It derives display-only values from `configStore` using the same lightweight mappings as `generatePreviewTokens`:
-- Colors: show the primary hex and 3 derived swatches
-- Typography: show font family name and scale ratio
-- Spacing: show 4 spacing steps derived from base unit
-- Radii: show sm/md/lg values
-
-**Acceptance criteria:**
-- [ ] Stage 3 renders `<SystemPreview />` at the top; the preview is live and continues to reflect the config
-- [ ] Token summary sections are collapsed by default; clicking each header expands/collapses them
-- [ ] The Primitives section shows at least 5 color swatches labeled with semantic names
-- [ ] The project name input defaults to "My Design System"
-- [ ] The Continue button is disabled when the project name input is empty
-- [ ] The Continue button is enabled as soon as a non-empty project name is entered
-- [ ] `tsc --noEmit` in `frontend/` passes
-- [ ] `SESSION_LOG.md` updated
-
-**Must not do:**
-- Must not call the backend to compute token values — all display values derived client-side
-- Must not implement "View raw JSON" toggle in this phase — stub the button as disabled with a tooltip "Coming soon"
-- Must not implement "Back to adjust" deep links within Stage 3 — those are a polish item for Phase 3
-
----
-
-### Task 2.8 — Stage 4: Export
-
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Task 2.4, Task 2.1
-
-**What this task implements:**
-Stage 4: three export CTAs (Download ZIP, CLI command, Figma setup), plus the account prompt for anonymous users. The Download ZIP button calls the new `POST /api/v1/export` endpoint (Task 2.1) with the current `configStore` state and triggers a file download. The CLI command section is shown for logged-in users with a saved project. The account prompt is shown for anonymous users.
-
-**Files to create or modify:**
-- `frontend/src/components/creation/stages/Stage4Export.tsx` — top-level stage component; reads `userStore.user` to determine auth state; renders three CTA sections; Continue button is replaced by a "Done" button that navigates to `/`
-- `frontend/src/components/creation/stages/stage4/DownloadZipCta.tsx` — prominent button; on click, calls `POST /api/v1/export` with `configStore.getState()` as body; on response, creates an object URL from the blob and triggers `<a download>` click; shows loading state during request; shows error message on failure
-- `frontend/src/components/creation/stages/stage4/CliCommandCta.tsx` — if user is authenticated and `projectId` is set in context: shows the CLI command `npx @ds-gen/cli init --project={id}` in a code block with a copy-to-clipboard button; if anonymous: shows the command grayed out with the note "Save your project to get a project ID for the CLI"
-- `frontend/src/components/creation/stages/stage4/FigmaSetupCta.tsx` — button that expands an inline guide: three numbered steps with links to the Base UI community file and Tokens Studio plugin; static content, no network calls
-- `frontend/src/components/creation/stages/stage4/AccountPrompt.tsx` — shown only for anonymous users; "Create a free account to save this project and update it any time." with two buttons: "Save my project" (navigates to `/register`) and "Just download" (dismisses the prompt for the session)
-
-**Download ZIP implementation:**
+**Type style font defaults:**
 ```typescript
-const res = await fetch('/api/v1/export', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(configStore.getState()),
-})
-const blob = await res.blob()
-const url = URL.createObjectURL(blob)
-const a = document.createElement('a')
-a.href = url
-a.download = `${uiStore.projectName ?? 'design-system'}.zip`
-a.click()
-URL.revokeObjectURL(url)
-```
-
-**Acceptance criteria:**
-- [ ] Clicking "Download package" posts the current config to `POST /api/v1/export` and downloads a `.zip` file
-- [ ] The ZIP filename uses `uiStore.projectName` (e.g., `my-design-system.zip`)
-- [ ] A loading spinner is shown on the Download button during the request
-- [ ] If the export request fails, an inline error message is shown
-- [ ] For anonymous users, the account prompt is visible below the CTAs
-- [ ] Clicking "Just download" dismisses the account prompt (hidden for the remainder of the session)
-- [ ] "Save my project" navigates to `/register`
-- [ ] Clicking the CLI copy button copies the command to clipboard
-- [ ] `tsc --noEmit` in `frontend/` passes
-- [ ] `SESSION_LOG.md` updated
-
-**Must not do:**
-- Must not implement the full account creation flow at Stage 4 — "Save my project" just navigates to `/register`
-- Must not implement project auto-save in this task — that is Phase 3
-- Must not make the CLI command available for anonymous users without a project ID
-
----
-
-### Task 2.9 — Playwright Phase 2 tests
-
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Tasks 2.5 – 2.8 (all stages complete)
-
-**What this task implements:**
-Playwright e2e tests for the creation flow, covering the journey steps listed for Phase 2 in `docs/user-journeys.md`.
-
-**Files to create or modify:**
-- `frontend/tests/e2e/phase-2.spec.ts` — 5 tests (see below)
-- `frontend/playwright.config.ts` — add preview-sandbox webServer entry: `{ command: 'npm run dev', cwd: resolve(__dirname, '../preview-sandbox'), url: 'http://localhost:5174', timeout: 30_000, reuseExistingServer: !process.env.CI }`
-
-**Test cases:**
-1. **Default state: preview renders on load** (journey 1.1.1–1.1.2): Navigate to `/new`. Assert `SystemPreview` iframe is visible. Assert stage progress shows step 1 active. Assert default project type "SaaS / Web App" card is visually selected.
-2. **Project type change updates scope chips** (journey 1.2.1): Navigate to `/new`. Click "Marketing Site" card. Assert scope chips row no longer shows "Overlays" or "Data Display" chips.
-3. **Color direction change updates preview** (journey 1.2.6): Navigate to `/new`. Click the "Warm & Approachable" color direction card. Assert the card is selected. Assert `configStore.color.colorDirection` is `'warm-approachable'` (read via `page.evaluate(() => window.__configStore?.color?.colorDirection)`).
-4. **Complete flow → download ZIP** (journey 1.5.2–1.5.3): Navigate to `/new`. Click Continue through stages 1 and 2 (defaults are valid). On stage 3, type a project name. Click Continue to reach stage 4. Set up download interception. Click "Download package". Assert the download occurred and filename ends in `.zip`. Assert the downloaded file is a non-empty binary (content-length > 0).
-5. **Unauthenticated: account prompt shown on Stage 4** (journey 1.5.1): Navigate to `/new`. Click Continue through all stages to Stage 4. Assert the account prompt ("Create a free account") is visible. Click "Just download". Assert the account prompt is no longer visible.
-
-**Notes on ZIP download testing in Playwright:**
-Use `page.waitForEvent('download')` to intercept the download triggered by the anchor click. Assert `download.suggestedFilename()` ends in `.zip`. Save to a temp path and assert file size > 0.
-
-**Notes on configStore inspection:**
-Expose the store for testing via a window global in development mode only:
-```typescript
-// frontend/src/main.tsx — add in dev mode only
-if (import.meta.env.DEV) {
-  (window as unknown as Record<string, unknown>).__configStore = useConfigStore.getState()
+const TYPE_STYLE_DEFAULTS: Record<TypeStyle, Pick<TypographyConfig, 'displayFace' | 'bodyFace' | 'codeFace' | 'scaleRatio'>> = {
+  geometric:           { displayFace: 'Inter',              bodyFace: 'Inter',             codeFace: 'JetBrains Mono', scaleRatio: 1.25 },
+  humanist:            { displayFace: 'Plus Jakarta Sans',  bodyFace: 'Inter',             codeFace: 'JetBrains Mono', scaleRatio: 1.25 },
+  'serif-accented':    { displayFace: 'Fraunces',           bodyFace: 'Inter',             codeFace: 'JetBrains Mono', scaleRatio: 1.2 },
+  'monospace-accented':{ displayFace: 'Inter',              bodyFace: 'JetBrains Mono',    codeFace: 'JetBrains Mono', scaleRatio: 1.333 },
 }
 ```
 
+**Customize disclosures:**
+- Each axis has a "Customize" button that toggles a smooth expand/collapse panel
+- Only the density and typography customize panels are required for Phase 2. Personality and dimensionality customize panels may show "Advanced customization coming soon."
+- Density: number input (1–8, step 0.5) for the base spacing unit; `setConfig({ shape: { density: ... } })` and update preview. Show a derived scale preview: 8 steps labeled `space-1` through `space-8` with computed px values.
+- Typography: text inputs for `displayFace`, `bodyFace`, `codeFace`; select for `scaleRatio` (1.2 / 1.25 / 1.333)
+
 **Acceptance criteria:**
-- [ ] `cd frontend && npx playwright test phase-2` — all 5 tests pass
-- [ ] Tests run against real servers (backend + preview sandbox + frontend)
-- [ ] Journey steps 1.1.1–1.1.2, 1.2.1, 1.2.6, 1.5.1–1.5.3 are covered (matches coverage table in `docs/user-journeys.md`)
-- [ ] All Phase 1 Playwright tests still pass — 0 regressions
+- [ ] All four axis rows render with the correct cards and defaults pre-selected
+- [ ] Selecting "Compact" density updates the System Preview spacing within 500ms
+- [ ] Selecting "Serif-accented" type style updates the System Preview display text to Fraunces
+- [ ] Selecting "Flat" dimensionality removes shadow values from the preview's CSS custom properties
+- [ ] "Customize" on Density expands to show a base unit input and derived scale
+- [ ] `tsc --noEmit` in `frontend/`: zero errors
 - [ ] `SESSION_LOG.md` updated
 
 **Must not do:**
-- Must not mock the backend API — tests run against the real `POST /api/v1/export` endpoint
-- Must not mock postMessage — the iframe actually loads and the preview sandbox runs
+- Must not implement the Personality or Dimensionality fine-grained customization panels — use a "coming soon" placeholder
+- Must not allow deselecting all axis options — each axis must always have exactly one selected value
+
+---
+
+### Task 2.5 — Stage 3: Review
+
+> **Status:** `[x]` Complete
+> **Session:** —
+> **Depends on:** Task 2.4
+
+**What this task implements:**
+Stage 3 is the review stage. The System Preview takes the primary position. A token summary shows all generated token layers in collapsible sections with a "View raw JSON" toggle. The user enters a project name. Continue is disabled until a non-empty name is entered.
+
+**Files to create:**
+- `frontend/src/components/flow/Stage3.tsx` — main Stage 3 component
+- `frontend/src/components/flow/Stage3TokenSummary.tsx` — collapsible token tree with raw JSON toggle
+- `frontend/src/components/flow/Stage3ProjectName.tsx` — name input wired to `uiStore.setProjectName`
+
+**Stage 3 layout:**
+- System Preview occupies the full right column (same position as in all stages, via the shell)
+- Left column contains:
+  1. `Stage3ProjectName` — text input, label "Project name", placeholder "My Design System"; on change calls `uiStore.setProjectName(value)`; when empty, sets `uiStore.setCanAdvance(false)`; when non-empty, sets `uiStore.setCanAdvance(true)`
+  2. `Stage3TokenSummary` — shows the output of calling `generate(configStore.config)` on the client; display the token counts per layer (e.g. "42 primitives · 28 semantic tokens · 16 component tokens")
+  3. "Back to adjust" links: clicking takes the user back to Stage 1 or Stage 2 (calls `uiStore.setCurrentStage(0)` or `uiStore.setCurrentStage(1)`)
+
+**`Stage3TokenSummary`:**
+- Call `generate(config)` from the backend pipeline (already used by the server, importable in frontend via the workspace alias or direct relative import — confirm it is browser-safe, i.e. no Node.js-only imports). If `generate` is not browser-safe, display a static placeholder summary with counts from the preview sandbox's CSS variables instead.
+- Three collapsible sections: Primitives, Semantic, Components
+- Each section: a summary line ("42 primitive tokens across 6 scales") + a collapsed list of token names and values
+- "View raw JSON" toggle per section: reveals the full W3C DTCG JSON output for that layer (formatted, scrollable `<pre>`)
+
+**Continue gate:**
+- `uiStore.canAdvance` is set to `false` when `Stage3.tsx` mounts (name input is empty initially)
+- `uiStore.setCanAdvance(true)` is called when the name input has a non-empty trimmed value
+- On unmount, set `canAdvance` back to `true` (so stage 1/2 don't inherit the false state)
+
+**Acceptance criteria:**
+- [ ] Stage 3 renders with System Preview visible and the project name input focused
+- [ ] Entering a project name enables the "Continue" button
+- [ ] Clearing the project name disables "Continue"
+- [ ] Token summary shows at least the section headers for Primitives, Semantic, and Components
+- [ ] "View raw JSON" reveals formatted JSON output
+- [ ] `tsc --noEmit` in `frontend/`: zero errors
+- [ ] `SESSION_LOG.md` updated
+
+**Must not do:**
+- Must not call the backend API in Stage 3 — any token generation for display purposes runs client-side
+- Must not block rendering while token generation runs — if `generate()` is slow, show a spinner or static placeholder while it completes
+
+---
+
+### Task 2.6 — Stage 4: Export and anonymous project save
+
+> **Status:** `[x]` Complete
+> **Session:** —
+> **Depends on:** Task 2.5
+
+**What this task implements:**
+Stage 4 creates the anonymous project and presents the shareable URL, the ZIP download, and the CLI/Figma CTAs. The project is created via `POST /projects` when the user clicks "Save project" or "Download package" — whichever happens first. The `ownerToken` is stored in `anonymousStore`. A "Your project is saved" message shows the shareable URL.
+
+**Files to create:**
+- `frontend/src/components/flow/Stage4.tsx` — main Stage 4 component
+
+**Stage 4 layout and behavior:**
+
+**Project save (on "Download package" or "Save project" click):**
+1. If `uiStore.savedProjectId` is null, call `createProject({ name: uiStore.projectName, config: configStore.config })`
+2. On success: store `project.id` in `uiStore.savedProjectId` (new field); `ownerToken` is stored in `anonymousStore` by `createProject` automatically
+3. Show "Your design system is saved at `/projects/:id`" with a copy-link button
+4. Proceed to the ZIP download (step 5)
+5. For ZIP download: call `GET /projects/:id/export.zip` (via fetch with `responseType: blob`) and trigger a browser download named `<projectName>.zip`
+
+**CTAs:**
+- **"Download package"** — primary CTA button (blue). On click: save project if not saved, then download ZIP.
+- **"Use the CLI"** — secondary CTA. Shows the command `npx @ds-gen/cli init --project=<id>` in a copyable code block. If the project hasn't been saved yet, clicking first saves it. CLI requires an account (show "Requires an account — sign in to use the CLI" beneath the command, grayed out).
+- **"Figma setup"** — link/button. Opens a modal or navigates to a simple guide: 3 steps with brief instructions for the Tokens Studio import. No screenshots required in Phase 2.
+
+**Account prompt (below CTAs):**
+A soft banner: "Create a free account to manage this project." Two links: "Create account" (navigates to `/register`) and "Sign in" (navigates to `/login`). This prompt does NOT block the download. Phase 3 will wire account creation back to the project.
+
+**`uiStore` additions needed:**
+- `savedProjectId: string | null` (default `null`)
+- `setSavedProjectId(id: string)`
+
+**`configStore` cleanup:**
+After a successful project save, call `configStore.resetConfig()` to clear `localStorage['ds-gen-flow-config']`. The project is now saved on the server; the local draft is no longer needed.
+
+**Acceptance criteria:**
+- [ ] Clicking "Download package" on Stage 4 creates an anonymous project (`POST /projects`, no auth cookie) and saves `ownerToken` to `anonymousStore` / `localStorage`
+- [ ] The ZIP file downloads and contains a non-empty `tokens/` directory when inspected
+- [ ] The shareable URL `/projects/<id>` is shown and clicking it navigates to the project page (which shows the "You own this" badge since `ownerToken` is in the store)
+- [ ] The CLI command block shows the project ID and has a copy button
+- [ ] The Figma setup button opens a guide or placeholder modal
+- [ ] After download, `localStorage['ds-gen-flow-config']` is cleared
+- [ ] `tsc --noEmit` in `frontend/`: zero errors
+- [ ] `SESSION_LOG.md` updated
+
+**Must not do:**
+- Must not implement account creation in Stage 4 — the "Create account" and "Sign in" links simply navigate to `/register` and `/login`. Account integration is Phase 3.
+- Must not call `POST /projects` more than once per flow session — check `uiStore.savedProjectId` before calling
+- Must not redirect away from Stage 4 after save — the user should stay on the page to download and share
+
+---
+
+### Task 2.7 — Playwright Phase 2 tests
+
+> **Status:** `[x]` Complete
+> **Session:** —
+> **Depends on:** Task 2.6
+
+**What this task implements:**
+Playwright e2e tests for the creation flow, covering the Journey 1 and Journey 6 steps in `docs/user-journeys.md`.
+
+**Files to create:**
+- `frontend/tests/e2e/phase-2.spec.ts` — 5 tests
+
+**Test cases:**
+
+1. **Default state: preview renders on arrival** (journey 1.1.1–1.1.2):
+   Navigate to `/new`. Assert the System Preview iframe is visible. Assert the progress indicator shows Stage 1 active. Assert the "SaaS / Web App" project type card is in a selected/active state. Wait for the preview iframe to post `READY` (listen via `page.evaluate` to check `window.__previewReady` set by the bridge). Assert the System Preview iframe is showing content (not blank).
+
+2. **Project type change updates scope chips** (journey 1.2.1):
+   Navigate to `/new`. Assert 6 scope chips are visible. Click "Marketing Site." Assert the scope chips now show exactly 4 chips (no "Overlays" chip, no "Data Display" chip).
+
+3. **Color direction change updates preview** (journey 1.2.6):
+   Navigate to `/new`. Note the initial primary color CSS variable from the preview iframe: `await page.frameLocator('iframe[src*="preview"]').evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--color-primary-500'))`. Click "Warm & Approachable." Assert that the `--color-primary-500` CSS variable changes to an amber/orange value (hue between 30° and 50° in HSL, or simply that it changed from the initial blue).
+
+4. **Personality axis selection updates preview** (journey 1.3.2–1.3.5):
+   Navigate to `/new`. Advance to Stage 2. Select "Compact" density. Assert the preview's `--spacing-base` CSS variable changes. Select "Serif-accented" type style. Assert the display font in the preview changes (the type-scale section renders text in Fraunces — check that `font-family` on the display element includes "Fraunces"). Select "Flat" dimensionality. Assert `--shadow-sm` is `none` in the preview.
+
+5. **Complete flow → download ZIP** (journey 1.5.2–1.5.3):
+   Navigate to `/new`. Stage 1: defaults (no changes needed — advance condition is met). Advance to Stage 2. Advance (all axes have defaults). Advance to Stage 3. Enter "E2E Test System" in the project name field. Advance to Stage 4. Click "Download package." Assert a download is triggered (`page.waitForEvent('download')`). Assert the downloaded file has a `.zip` extension. Assert `localStorage['ds-gen-anonymous']` has an entry (project was saved).
+
+**Note on postMessage and iframe access:** The Playwright `frameLocator` API can access the iframe's DOM. Use `page.frameLocator('iframe[src*="preview"]')` to query elements inside the preview sandbox. For CSS custom properties on `:root`, use `page.frameLocator(...).evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--token-name'))`.
+
+**Acceptance criteria:**
+- [ ] `cd frontend && npx playwright test phase-2` — all 5 tests pass
+- [ ] All Phase 1 and Phase 1b Playwright tests still pass (0 regressions)
+- [ ] Journey steps 1.1.1–1.1.2, 1.2.1, 1.2.6, 1.3.2–1.3.5, 1.5.2–1.5.3 are covered
+- [ ] `SESSION_LOG.md` updated
+
+**Must not do:**
+- Must not use `page.waitForTimeout` — use `waitForSelector`, `waitForFunction`, or event-based waiting instead
+- Must not test the `generate()` pipeline output directly — that is covered by the existing backend tests
 
 ---
 
@@ -421,16 +456,18 @@ if (import.meta.env.DEV) {
 Before starting Phase 3, verify all of the following:
 
 - [ ] All tasks above marked `[x]` complete
-- [ ] `cd backend && npm test` — all tests pass (includes new anonymous export tests)
-- [ ] `cd frontend && npx playwright test` — all Phase 1 and Phase 2 e2e tests pass (8 total)
-- [ ] `tsc --noEmit` in `packages/types`, `backend`, `frontend`, `preview-sandbox` — all pass with zero errors
+- [ ] `cd backend && npm test` — all tests pass (no regressions from Phase 2 changes)
+- [ ] `cd frontend && npx playwright test` — all Phase 1, 1b, and Phase 2 e2e tests pass (12 total)
+- [ ] `tsc --noEmit` in `packages/types`, `backend`, `frontend`, and `preview-sandbox` — all pass with zero errors
 - [ ] `eslint src` in `backend` and `frontend` — zero errors
-- [ ] `cd preview-sandbox && npm run build` — builds without errors
-- [ ] Navigating to `/new` in a browser, clicking through all 4 stages, and clicking "Download package" on Stage 4 produces a valid ZIP file
-- [ ] The System Preview in the browser updates visibly within 500ms when a Stage 1 or Stage 2 selection is changed
+- [ ] `cd preview-sandbox && npm run build` — dist builds cleanly
+- [ ] Manual verification: navigate to `/new` with no account; complete the full flow; download ZIP; ZIP contains `tokens/`, `components/`, `docs/` directories
+- [ ] Manual verification: color direction change in Stage 1 updates the System Preview primary color within 500ms
+- [ ] Manual verification: project is saved anonymously and shareable URL works; opening URL in incognito shows read-only mode
 - [ ] Phase retrospective written to `docs/phase-2-retro.md`
 - [ ] `docs/user-journeys.md` updated for Phase 3 scope
 - [ ] `docs/design-system-plan-summary.md` updated to mark Phase 2 Complete
+- [ ] `AGENTS.md` updated with new patterns from Phase 2
 - [ ] Session log archived to `logs/phase-2.md`
 
 ---

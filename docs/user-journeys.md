@@ -165,6 +165,37 @@ A developer who has exported a design system and wants to bring it into their Re
 
 ---
 
+## Journey 6 — Anonymous Project Save and Claim
+
+A user who creates a design system without an account, shares the URL, and later claims the project after creating an account.
+
+### 6.1 — Anonymous save
+
+| Step | Action | Expected result |
+|---|---|---|
+| 6.1.1 | Complete the creation flow and reach Stage 4 | "Save project" button is available; no account required |
+| 6.1.2 | Click "Save project" | Project is created; user is shown a permanent shareable URL (e.g. `/projects/abc123`); owner token stored in browser |
+| 6.1.3 | Copy and visit the shareable URL in the same browser | Full project view loads; edit controls visible because owner token is present |
+| 6.1.4 | Open the shareable URL in a different browser or incognito window | Full project view loads in read-only mode; no edit controls visible |
+
+### 6.2 — Claim after registration
+
+| Step | Action | Expected result |
+|---|---|---|
+| 6.2.1 | Click "Create account" from any prompt (home page, project page, or direct navigation to /register) | Registration form loads |
+| 6.2.2 | Complete registration and email verification | After login, a "Claim your project" prompt appears listing the anonymous project(s) stored in the browser |
+| 6.2.3 | Click "Claim" on the prompt | Project ownership transfers to the new account; project appears in the home page project grid |
+| 6.2.4 | Dismiss the claim prompt | Anonymous project remains accessible via its URL but is not added to the account; owner token is not consumed |
+
+### 6.3 — Orphaned anonymous projects
+
+| Step | Action | Expected result |
+|---|---|---|
+| 6.3.1 | Clear browser storage after creating an anonymous project | The project URL still loads in read-only mode; edit access is no longer available from this browser |
+| 6.3.2 | Log in with an existing account that has no record of the anonymous project | No claim prompt; project is viewable but not claimable from this account |
+
+---
+
 ## Journey 5 — Coding Agent Reads the Design System
 
 A coding agent (e.g. Claude Code) uses the agent API to understand a design system before writing code.
@@ -189,6 +220,9 @@ Update this table when adding or modifying Playwright tests.
 |---|---|---|---|
 | 3.1.1–3.1.4 | `e2e/phase-1.spec.ts` | register → verify email → login → home page | 1 |
 | 3.2.1 | `e2e/phase-1.spec.ts` | log in → home page shows project list (empty state) | 1 |
+| 6.1.2–6.1.4 | `e2e/phase-1b.spec.ts` | anonymous project create → shareable URL → read-only in incognito | 1b |
+| 6.2.2–6.2.3 | `e2e/phase-1b.spec.ts` | register → claim prompt → claim → project in home grid | 1b |
+| 6.3.1 | `e2e/phase-1b.spec.ts` | clear localStorage → project URL read-only | 1b |
 | 1.1.1–1.1.2 | `e2e/phase-2.spec.ts` | default state: preview renders on load | 2 |
 | 1.2.1 | `e2e/phase-2.spec.ts` | project type change updates scope chips | 2 |
 | 1.2.6 | `e2e/phase-2.spec.ts` | color direction change updates preview | 2 |
@@ -203,12 +237,16 @@ Update this table when adding or modifying Playwright tests.
 
 ### Steps not yet covered by automated tests
 
+**Journey 6 (Phase 1b):**
+- 6.1.1 — "Save project" button on Stage 4 _(Phase 2: creation flow not yet built)_
+- 6.2.4 — Dismiss claim prompt without claiming _(low priority; manual verification acceptable)_
+- 6.3.2 — Different account cannot claim an orphaned project _(covered by backend integration tests)_
+
 **Journey 1 (Phase 2):**
 - 1.2.3–1.2.5 — Customize scope disclosure expand/collapse
 - 1.2.7 — Light/dark mode toggle in Stage 1
 - 1.3.6 — Customize disclosure on density axis
 - 1.4.1–1.4.5 — Stage 3 full review interactions
-- 1.5.4 — Account prompt dismiss without account creation
 
 **Journey 2:**
 - 2.1.1–2.1.5 — Brand asset input flow _(not yet covered)_

@@ -1,7 +1,7 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
 import type { ProjectConfig } from '@ds-gen/types'
-import { requireAuth } from '../middleware/auth'
+import { optionalAuth } from '../middleware/auth'
 import { cliAuth } from '../middleware/cliAuth'
 import { getProject, findProjectById } from '../services/project'
 import { generate } from '../pipeline'
@@ -11,16 +11,26 @@ import { updateProject } from '../db/queries/projects'
 export const projectExportRouter = Router()
 export const agentRouter = Router()
 
-projectExportRouter.use(requireAuth)
+projectExportRouter.use(optionalAuth)
+
+function resolveEditAuth(req: Request): { userId?: string; ownerToken?: string } | null {
+  const userId = req.user?.id
+  const tokenHeader = req.headers['x-owner-token']
+  const ownerToken = typeof tokenHeader === 'string' ? tokenHeader : undefined
+  if (!userId && !ownerToken) return null
+  return { userId, ownerToken }
+}
 
 // POST /projects/:id/export
 projectExportRouter.post('/:id/export', async (req: Request, res: Response) => {
-  const result = await getProject(req.params.id!, req.user!.id)
+  const auth = resolveEditAuth(req)
+  if (!auth) { res.status(401).json({ error: 'Authentication required' }); return }
+  const result = await getProject(req.params.id!, auth)
   if (result === null) {
     res.status(404).json({ error: 'Project not found' })
     return
   }
-  if (result === 'forbidden') {
+  if (!result.canEdit) {
     res.status(403).json({ error: 'Forbidden' })
     return
   }
@@ -32,12 +42,14 @@ projectExportRouter.post('/:id/export', async (req: Request, res: Response) => {
 
 // GET /projects/:id/export.zip
 projectExportRouter.get('/:id/export.zip', async (req: Request, res: Response) => {
-  const result = await getProject(req.params.id!, req.user!.id)
+  const auth = resolveEditAuth(req)
+  if (!auth) { res.status(401).json({ error: 'Authentication required' }); return }
+  const result = await getProject(req.params.id!, auth)
   if (result === null) {
     res.status(404).json({ error: 'Project not found' })
     return
   }
-  if (result === 'forbidden') {
+  if (!result.canEdit) {
     res.status(403).json({ error: 'Forbidden' })
     return
   }

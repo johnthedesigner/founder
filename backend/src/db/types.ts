@@ -36,10 +36,11 @@ export interface PasswordResetTokenRow {
 
 export interface ProjectRow {
   id: string
-  user_id: string
+  user_id: string | null
   name: string
   slug: string
   config: Record<string, unknown>
+  owner_token: string | null
   last_exported_at: Date | null
   created_at: Date
   updated_at: Date

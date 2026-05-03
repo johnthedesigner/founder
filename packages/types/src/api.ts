@@ -43,13 +43,19 @@ export interface MeResponse {
 
 export interface ProjectResponse {
   id: string
-  userId: string
+  userId: string | null
+  canEdit: boolean
   name: string
   slug: string
   config: ProjectConfig
   lastExportedAt: string | null
   createdAt: string
   updatedAt: string
+}
+
+export interface AnonymousCreateProjectResponse {
+  project: ProjectResponse
+  ownerToken: string
 }
 
 export interface CreateProjectRequest {

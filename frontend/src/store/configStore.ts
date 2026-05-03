@@ -1,7 +1,10 @@
 import { create } from 'zustand'
 import type { ProjectConfig } from '@ds-gen/types'
+import { ProjectConfigSchema } from '@ds-gen/types'
 
-const DEFAULT_CONFIG: ProjectConfig = {
+const FLOW_CONFIG_KEY = 'ds-gen-flow-config'
+
+export const DEFAULT_CONFIG: ProjectConfig = {
   projectType: 'saas',
   componentScope: ['forms', 'navigation', 'overlays', 'feedback', 'data-display', 'layout'],
   modes: ['light'],
@@ -26,6 +29,19 @@ const DEFAULT_CONFIG: ProjectConfig = {
   },
 }
 
+function loadStoredConfig(): ProjectConfig {
+  try {
+    const raw = localStorage.getItem(FLOW_CONFIG_KEY)
+    if (raw) {
+      const parsed = ProjectConfigSchema.safeParse(JSON.parse(raw))
+      if (parsed.success) return parsed.data
+    }
+  } catch {
+    // ignore — corrupted storage
+  }
+  return DEFAULT_CONFIG
+}
+
 interface ConfigStore {
   config: ProjectConfig
   setConfig: (partial: Partial<ProjectConfig>) => void
@@ -33,8 +49,23 @@ interface ConfigStore {
 }
 
 export const useConfigStore = create<ConfigStore>()((set) => ({
-  config: DEFAULT_CONFIG,
+  config: loadStoredConfig(),
   setConfig: (partial) =>
-    set((state) => ({ config: { ...state.config, ...partial } })),
-  resetConfig: () => set({ config: DEFAULT_CONFIG }),
+    set((state) => {
+      const updated = { ...state.config, ...partial }
+      try {
+        localStorage.setItem(FLOW_CONFIG_KEY, JSON.stringify(updated))
+      } catch {
+        // ignore — private browsing or storage full
+      }
+      return { config: updated }
+    }),
+  resetConfig: () => {
+    try {
+      localStorage.removeItem(FLOW_CONFIG_KEY)
+    } catch {
+      // ignore
+    }
+    set({ config: DEFAULT_CONFIG })
+  },
 }))

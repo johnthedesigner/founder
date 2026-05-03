@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto'
 import { ProjectConfigSchema } from '@ds-gen/types'
 import type { ProjectConfig } from '@ds-gen/types'
 import {
@@ -10,9 +11,14 @@ import {
 } from '../db/queries/projects'
 import type { ProjectRow } from '../db/types'
 
+export type EditAuth =
+  | { type: 'user'; userId: string }
+  | { type: 'token'; ownerToken: string }
+
 export interface ProjectResponse {
   id: string
-  userId: string
+  userId: string | null
+  canEdit: boolean
   name: string
   slug: string
   config: ProjectConfig
@@ -21,10 +27,11 @@ export interface ProjectResponse {
   updatedAt: string
 }
 
-function rowToResponse(row: ProjectRow): ProjectResponse {
+function rowToResponse(row: ProjectRow, canEdit: boolean): ProjectResponse {
   return {
     id: row.id,
     userId: row.user_id,
+    canEdit,
     name: row.name,
     slug: row.slug,
     config: row.config as unknown as ProjectConfig,
@@ -32,6 +39,16 @@ function rowToResponse(row: ProjectRow): ProjectResponse {
     createdAt: row.created_at.toISOString(),
     updatedAt: row.updated_at.toISOString(),
   }
+}
+
+function computeCanEdit(
+  row: ProjectRow,
+  auth?: { userId?: string; ownerToken?: string },
+): boolean {
+  if (!auth) return false
+  if (auth.userId && row.user_id === auth.userId) return true
+  if (auth.ownerToken && row.owner_token !== null && auth.ownerToken === row.owner_token) return true
+  return false
 }
 
 function toKebabCase(name: string): string {
@@ -44,8 +61,10 @@ function toKebabCase(name: string): string {
   )
 }
 
-async function generateUniqueSlug(userId: string, name: string): Promise<string> {
+async function generateUniqueSlug(userId: string | null, name: string): Promise<string> {
   const base = toKebabCase(name)
+  // Anonymous projects have no slug uniqueness constraint — skip collision check.
+  if (userId === null) return base
   let slug = base
   for (let i = 0; i < 10; i++) {
     const existing = await findProjectByUserIdAndSlug(userId, slug)
@@ -82,9 +101,9 @@ function deepMerge(base: Record<string, unknown>, patch: Record<string, unknown>
 // ---- create ----
 
 export async function createProject(
-  userId: string,
+  userId: string | null,
   data: { name?: string; config: unknown },
-): Promise<ProjectResponse> {
+): Promise<{ project: ProjectResponse; ownerToken: string | null }> {
   const parsed = ProjectConfigSchema.safeParse(data.config)
   if (!parsed.success) {
     const err = new Error('Invalid config')
@@ -95,44 +114,50 @@ export async function createProject(
 
   const name = data.name?.trim() || 'My Design System'
   const slug = await generateUniqueSlug(userId, name)
+  const ownerToken = userId === null ? randomBytes(32).toString('hex') : null
   const row = await insertProject({
     userId,
     name,
     slug,
     config: parsed.data as unknown as Record<string, unknown>,
+    ownerToken: ownerToken ?? undefined,
   })
-  return rowToResponse(row)
+  return { project: rowToResponse(row, true), ownerToken }
 }
 
 // ---- list ----
 
 export async function listProjects(userId: string): Promise<ProjectResponse[]> {
   const rows = await findProjectsByUserId(userId)
-  return rows.map(rowToResponse)
+  return rows.map((row) => rowToResponse(row, true))
+}
+
+function hasEditAccess(row: ProjectRow, auth: EditAuth): boolean {
+  if (auth.type === 'user') return row.user_id === auth.userId
+  return row.owner_token !== null && row.owner_token === auth.ownerToken
 }
 
 // ---- get ----
 
 export async function getProject(
   projectId: string,
-  userId: string,
-): Promise<ProjectResponse | null | 'forbidden'> {
+  auth?: { userId?: string; ownerToken?: string },
+): Promise<ProjectResponse | null> {
   const row = await findProjectById(projectId)
   if (!row) return null
-  if (row.user_id !== userId) return 'forbidden'
-  return rowToResponse(row)
+  return rowToResponse(row, computeCanEdit(row, auth))
 }
 
 // ---- update ----
 
 export async function updateProjectById(
   projectId: string,
-  userId: string,
+  auth: EditAuth,
   data: { name?: string; config?: unknown },
 ): Promise<ProjectResponse | null | 'forbidden' | 'invalid'> {
   const row = await findProjectById(projectId)
   if (!row) return null
-  if (row.user_id !== userId) return 'forbidden'
+  if (!hasEditAccess(row, auth)) return 'forbidden'
 
   let mergedConfig: Record<string, unknown> | undefined
   if (data.config !== undefined) {
@@ -150,20 +175,36 @@ export async function updateProjectById(
     config: mergedConfig,
   })
   if (!updated) return null
-  return rowToResponse(updated)
+  return rowToResponse(updated, true)
 }
 
 // ---- delete ----
 
 export async function deleteProjectById(
   projectId: string,
-  userId: string,
+  auth: EditAuth,
 ): Promise<'ok' | null | 'forbidden'> {
   const row = await findProjectById(projectId)
   if (!row) return null
-  if (row.user_id !== userId) return 'forbidden'
+  if (!hasEditAccess(row, auth)) return 'forbidden'
   await deleteProject(projectId)
   return 'ok'
+}
+
+// ---- claim ----
+
+export async function claimProject(
+  projectId: string,
+  ownerToken: string,
+  newUserId: string,
+): Promise<ProjectResponse | 'already-claimed' | 'forbidden'> {
+  const row = await findProjectById(projectId)
+  if (!row) return 'forbidden'
+  if (row.user_id !== null) return 'already-claimed'
+  if (!row.owner_token || row.owner_token !== ownerToken) return 'forbidden'
+  const updated = await updateProject(projectId, { userId: newUserId, ownerToken: null })
+  if (!updated) return 'forbidden'
+  return rowToResponse(updated, true)
 }
 
 // Re-export findProjectById for use by generate routes

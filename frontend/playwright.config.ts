@@ -32,5 +32,12 @@ export default defineConfig({
       timeout: 30_000,
       reuseExistingServer: !process.env.CI,
     },
+    {
+      command: 'npm run dev',
+      cwd: resolve(__dirname, '../preview-sandbox'),
+      url: 'http://localhost:5180',
+      timeout: 30_000,
+      reuseExistingServer: !process.env.CI,
+    },
   ],
 })

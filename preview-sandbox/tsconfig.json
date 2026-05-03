@@ -2,8 +2,10 @@
   "extends": "../tsconfig.base.json",
   "compilerOptions": {
     "jsx": "react-jsx",
-    "outDir": "dist",
-    "rootDir": "src"
+    "paths": {
+      "@ds-gen/types": ["../packages/types/src/index.ts"],
+      "@pipeline/*": ["../backend/src/pipeline/*"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "vite.config.ts"]
 }

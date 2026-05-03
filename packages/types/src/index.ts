@@ -52,6 +52,7 @@ export type {
   UserResponse,
   MeResponse,
   ProjectResponse,
+  AnonymousCreateProjectResponse,
   CreateProjectRequest,
   UpdateProjectRequest,
   ProjectListResponse,

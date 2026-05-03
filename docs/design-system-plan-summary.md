@@ -20,15 +20,22 @@ Express server, Postgres schema, migrations, auth system (email/password registr
 
 ---
 
-## Phase 2 — Creation Flow
-Full four-stage creation flow: project type selection with scope chips, brand asset input, color direction, mode selection, four personality axes with deep customization disclosures, full Stage 3 review with token summary, Stage 4 export CTAs. Preview sandbox (separate Vite build) communicating via postMessage. System Preview updates within 500ms of any config change. Anonymous users can complete the full flow and download a ZIP.
+## Phase 1b — Anonymous Projects and Claim
+Schema migration to support anonymous projects: `projects.user_id` becomes nullable, `owner_token` column added for anonymous edit access. New endpoints: anonymous project creation (returns owner_token once), public project GET with `canEdit` flag, and `POST /projects/:id/claim` (transfers an anonymous project to an authenticated account). Frontend: anonymous project state stored in localStorage; claim prompt shown post-registration. Enables the CodePen-style model where projects are saved and publicly shareable before any account is created.
 
-**Status:** Not started ← current
+**Status:** Complete
+
+---
+
+## Phase 2 — Creation Flow
+Full four-stage creation flow: project type selection with scope chips, brand asset input, color direction, mode selection, four personality axes with deep customization disclosures, full Stage 3 review with token summary, Stage 4 export CTAs. Preview sandbox (separate Vite build) communicating via postMessage. System Preview updates within 500ms of any config change. Completing Stage 4 saves the project anonymously and presents the shareable URL.
+
+**Status:** Not started
 
 ---
 
 ## Phase 3 — Accounts and Persistence
-Account creation integrated into the export flow (soft gate, never blocks download). Saved project flow: auto-save on config change, load saved config on return visit. Home page: project grid with palette thumbnail, project card overflow menu (rename, duplicate, delete). Login/logout flows.
+Account integration: registration and login are surfaced in-flow rather than blocking the experience. Auto-save for authenticated projects (debounced PATCH on config change). Home page: project grid with palette thumbnail, project card overflow menu (rename, duplicate, delete).
 
 **Status:** Not started
 

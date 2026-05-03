@@ -2,18 +2,27 @@ import { query } from '../connection'
 import type { ProjectRow } from '../types'
 
 export async function insertProject(data: {
-  userId: string
+  userId: string | null
   name: string
   slug: string
   config: Record<string, unknown>
+  ownerToken?: string
 }): Promise<ProjectRow> {
   const rows = await query<ProjectRow>(
-    `INSERT INTO projects (user_id, name, slug, config)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO projects (user_id, name, slug, config, owner_token)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING *`,
-    [data.userId, data.name, data.slug, JSON.stringify(data.config)],
+    [data.userId, data.name, data.slug, JSON.stringify(data.config), data.ownerToken ?? null],
   )
   return rows[0]!
+}
+
+export async function findProjectByOwnerToken(token: string): Promise<ProjectRow | null> {
+  const rows = await query<ProjectRow>(
+    'SELECT * FROM projects WHERE owner_token = $1',
+    [token],
+  )
+  return rows[0] ?? null
 }
 
 export async function findProjectsByUserId(userId: string): Promise<ProjectRow[]> {
@@ -41,7 +50,13 @@ export async function findProjectByUserIdAndSlug(
 
 export async function updateProject(
   id: string,
-  data: { name?: string; config?: Record<string, unknown>; lastExportedAt?: Date },
+  data: {
+    name?: string
+    config?: Record<string, unknown>
+    lastExportedAt?: Date
+    userId?: string        // for claim: transfer ownership
+    ownerToken?: string | null  // for claim: null clears the token
+  },
 ): Promise<ProjectRow | null> {
   const sets: string[] = ['updated_at = now()']
   const values: unknown[] = []
@@ -58,6 +73,14 @@ export async function updateProject(
   if (data.lastExportedAt !== undefined) {
     sets.push(`last_exported_at = $${idx++}`)
     values.push(data.lastExportedAt)
+  }
+  if (data.userId !== undefined) {
+    sets.push(`user_id = $${idx++}`)
+    values.push(data.userId)
+  }
+  if ('ownerToken' in data) {
+    sets.push(`owner_token = $${idx++}`)
+    values.push(data.ownerToken)
   }
 
   values.push(id)
