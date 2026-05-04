@@ -1,10 +1,12 @@
 import type { Project } from '../../api/projects'
+import { ProjectCard } from './ProjectCard'
 
 interface ProjectGridProps {
   projects: Project[]
+  onMutate: () => void
 }
 
-export function ProjectGrid({ projects }: ProjectGridProps) {
+export function ProjectGrid({ projects, onMutate }: ProjectGridProps) {
   if (projects.length === 0) {
     return (
       <div className="text-center py-16">
@@ -19,16 +21,7 @@ export function ProjectGrid({ projects }: ProjectGridProps) {
   return (
     <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {projects.map((project) => (
-        <li
-          key={project.id}
-          className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
-        >
-          <h3 className="font-semibold text-gray-900">{project.name}</h3>
-          <p className="mt-1 text-sm text-gray-500">{project.config.projectType}</p>
-          <p className="mt-3 text-xs text-gray-400">
-            Updated {new Date(project.updatedAt).toLocaleDateString()}
-          </p>
-        </li>
+        <ProjectCard key={project.id} project={project} onMutate={onMutate} />
       ))}
     </ul>
   )

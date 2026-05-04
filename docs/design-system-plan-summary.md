@@ -30,14 +30,14 @@ Schema migration to support anonymous projects: `projects.user_id` becomes nulla
 ## Phase 2 — Creation Flow
 Full four-stage creation flow: project type selection with scope chips, brand asset input, color direction, mode selection, four personality axes with deep customization disclosures, full Stage 3 review with token summary, Stage 4 export CTAs. Preview sandbox (separate Vite build) communicating via postMessage. System Preview updates within 500ms of any config change. Completing Stage 4 saves the project anonymously and presents the shareable URL.
 
-**Status:** Not started
+**Status:** Complete
 
 ---
 
 ## Phase 3 — Accounts and Persistence
 Account integration: registration and login are surfaced in-flow rather than blocking the experience. Auto-save for authenticated projects (debounced PATCH on config change). Home page: project grid with palette thumbnail, project card overflow menu (rename, duplicate, delete).
 
-**Status:** Not started
+**Status:** Complete
 
 ---
 

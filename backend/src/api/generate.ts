@@ -59,6 +59,7 @@ projectExportRouter.get('/:id/export.zip', async (req: Request, res: Response) =
   res.setHeader('Content-Type', 'application/zip')
   res.setHeader('Content-Disposition', `attachment; filename="${result.slug}.zip"`)
   res.send(buffer)
+  void updateProject(result.id, { lastExportedAt: new Date() })
 })
 
 // GET /api/v1/systems/:projectId/spec (no auth)

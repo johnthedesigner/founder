@@ -228,7 +228,7 @@ Update this table when adding or modifying Playwright tests.
 | 1.2.6 | `e2e/phase-2.spec.ts` | color direction change updates preview | 2 |
 | 1.3.2–1.3.5 | `e2e/phase-2.spec.ts` | personality axis changes update preview within 500ms | 2 |
 | 1.5.2–1.5.3 | `e2e/phase-2.spec.ts` | download ZIP → valid contents | 2 |
-| 3.1.5 | `e2e/phase-3.spec.ts` | create account at export → project saved | 3 |
+| 3.1.1–3.1.5 | `e2e/phase-3.spec.ts` | complete flow → create account → project saved → reload → in home grid | 3 |
 | 3.2.2–3.2.5 | `e2e/phase-3.spec.ts` | return to saved project → config intact → re-export | 3 |
 | 3.3.4 | `e2e/phase-3.spec.ts` | duplicate project → appears in grid | 3 |
 | 3.3.5 | `e2e/phase-3.spec.ts` | delete project → removed from grid | 3 |
@@ -237,16 +237,25 @@ Update this table when adding or modifying Playwright tests.
 
 ### Steps not yet covered by automated tests
 
-**Journey 6 (Phase 1b):**
-- 6.1.1 — "Save project" button on Stage 4 _(Phase 2: creation flow not yet built)_
+**Journey 6 (Phase 1b — complete):**
+- 6.1.1 — Download/save button on Stage 4 ✓ _covered by test 1.5 (Phase 2)_
 - 6.2.4 — Dismiss claim prompt without claiming _(low priority; manual verification acceptable)_
 - 6.3.2 — Different account cannot claim an orphaned project _(covered by backend integration tests)_
 
-**Journey 1 (Phase 2):**
-- 1.2.3–1.2.5 — Customize scope disclosure expand/collapse
-- 1.2.7 — Light/dark mode toggle in Stage 1
-- 1.3.6 — Customize disclosure on density axis
-- 1.4.1–1.4.5 — Stage 3 full review interactions
+**Journey 1 (Phase 2 — complete):**
+- 1.2.3–1.2.5 — Customize scope disclosure expand/collapse _(not automated; tested manually)_
+- 1.2.7 — Light/dark mode toggle in Stage 1 _(not automated; visual only)_
+- 1.3.6 — Customize disclosure on density axis _(not automated; tested manually)_
+- 1.4.1–1.4.3 — Stage 3: dark mode toggle, accessibility badges _(deferred; not yet built)_
+- 1.4.4 — "View raw JSON" reveal _(not automated; tested manually)_
+- 1.4.5 — Enter project name ✓ _covered by test 1.5 (Phase 2)_
+- 1.5.4 — "Just download" dismisses account prompt _(not applicable; prompt is always visible)_
+
+**Journey 3 (Phase 3 — complete):**
+- 3.1.1–3.1.5 ✓ _covered by Phase 3 tests (Tests 1 and 2)_
+- 3.2.2–3.2.5 ✓ _covered by Phase 3 tests (Tests 2 and 3)_
+- 3.3.4, 3.3.5 ✓ _covered by Phase 3 tests (Test 4)_
+- 3.3.1 (New project), 3.3.2 (overflow menu), 3.3.3 (Rename) _(not automated; manually verified)_
 
 **Journey 2:**
 - 2.1.1–2.1.5 — Brand asset input flow _(not yet covered)_

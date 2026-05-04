@@ -405,6 +405,158 @@ Browser navigations send `Accept: text/html`; fetch/XHR API calls do not. The by
 
 ---
 
+### Preview sandbox iframe — direct port, not proxy rewrite
+
+Serving a Vite dev server through a proxy with a path prefix rewrite (`/preview` → `http://localhost:5180`) breaks the Vite dev client: it generates root-relative asset paths (`/@vite/client`, `/src/main.tsx`) that the browser requests at the main origin without the prefix and never goes through the proxy.
+
+Use a direct cross-origin iframe src instead:
+
+```tsx
+// correct — direct port, no proxy
+<iframe src="http://localhost:5180" />
+
+// wrong — Vite dev assets won't load through a path rewrite
+<iframe src="/preview/index.html" />
+```
+
+The iframe being cross-origin is fine. `postMessage` with `targetOrigin: '*'` works across origins. The Vite proxy `/preview` entry can remain for production builds (which do have correct base-relative paths).
+
+---
+
+### `strictPort: true` — prevent silent port fallback in test environments
+
+Vite dev servers silently move to the next available port when the configured port is occupied. With `reuseExistingServer: true` in `playwright.config.ts`, Playwright will adopt whatever server is already running on the configured port — including the wrong app.
+
+Always set `strictPort: true` on any dev server that automated tests depend on:
+
+```typescript
+// preview-sandbox/vite.config.ts
+export default defineConfig({
+  server: { port: 5180, strictPort: true },
+})
+```
+
+Choose a port number unlikely to collide (above 5179). If Playwright reports passing tests that are clearly testing the wrong app, a port conflict is the first thing to check.
+
+---
+
+### `@pipeline` Vite alias — pipeline functions in the browser
+
+The backend pipeline (`backend/src/pipeline/`) is pure TypeScript with no Node.js-only imports. Add a Vite alias and a matching tsconfig `paths` entry to import pipeline functions directly in the browser or preview sandbox:
+
+```typescript
+// vite.config.ts
+resolve: {
+  alias: {
+    '@ds-gen/types': path.resolve(__dirname, '../packages/types/src/index.ts'),
+    '@pipeline': path.resolve(__dirname, '../backend/src/pipeline'),
+  },
+}
+
+// tsconfig.json
+"paths": {
+  "@ds-gen/types": ["../packages/types/src/index.ts"],
+  "@pipeline/*": ["../backend/src/pipeline/*"]
+}
+```
+
+Before using a pipeline path in the browser, verify it has no Node.js-only imports (`fs`, `path`, `os`, `child_process`). The palette, token, and component generators are all browser-safe. The export/zip module imports `jszip` which is browser-safe.
+
+---
+
+### `@ds-gen/types` — use `"default"` export condition for Vite (ESM)
+
+Vite resolves packages via the `"default"` or `"import"` export condition, not `"require"`. The types package must expose its compiled output through `"default"`:
+
+```json
+// packages/types/package.json
+"exports": {
+  ".": {
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
+  }
+}
+```
+
+The symptom of a wrong condition is a Vite startup error: `Failed to resolve entry for package "@ds-gen/types"`. This only surfaces when a file imports a runtime value (not just `import type`), because type imports are erased at compile time.
+
+---
+
+### Playwright cross-origin iframe — `page.frame()` + `frame.waitForFunction()`
+
+For cross-origin iframes, use `page.frame({ url: /pattern/ })` to get a `Frame` object. Use `frame.waitForFunction()` to poll CSS variables or DOM state inside the iframe:
+
+```typescript
+const frame = page.frame({ url: /localhost:5180/ })
+expect(frame).not.toBeNull()
+
+// Poll a CSS variable on :root inside the iframe
+await frame!.waitForFunction(
+  () =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-primary-500')
+      .trim() !== '',
+)
+
+// Poll for a value change, passing arg as second parameter
+const initial = await frame!.evaluate(() =>
+  getComputedStyle(document.documentElement).getPropertyValue('--color-primary-500').trim(),
+)
+await frame!.waitForFunction(
+  (init) =>
+    getComputedStyle(document.documentElement)
+      .getPropertyValue('--color-primary-500')
+      .trim() !== init,
+  initial,         // arg passed to function
+  { timeout: 5_000 },  // options as THIRD argument
+)
+```
+
+Note: `waitForFunction(fn, arg?, options?)` — the second positional argument is the arg, third is options. Passing `{ timeout }` as the second argument silently makes it the arg (the function receives it but ignores it) and uses the default 30s timeout instead.
+
+Check CSS variables on `:root` directly rather than reading `getComputedStyle(el).fontFamily` for font checks — `querySelector` returns the first matching element, which may use a different font variable than the one under test.
+
+---
+
+### Export routes for anonymous users — `optionalAuth` + `X-Owner-Token`
+
+Any route that anonymous users must reach (download, export) needs `optionalAuth` rather than `requireAuth`, plus explicit owner token support. Pattern:
+
+```typescript
+// backend: in the router file
+projectExportRouter.use(optionalAuth)
+
+function resolveEditAuth(req: Request): { userId?: string; ownerToken?: string } | null {
+  const userId = req.user?.id
+  const tokenHeader = req.headers['x-owner-token']
+  const ownerToken = typeof tokenHeader === 'string' ? tokenHeader : undefined
+  if (!userId && !ownerToken) return null
+  return { userId, ownerToken }
+}
+
+// In each handler:
+const auth = resolveEditAuth(req)
+if (!auth) { res.status(401).json({ error: 'Authentication required' }); return }
+const result = await getProject(req.params.id!, auth)
+if (!result?.canEdit) { res.status(result ? 403 : 404).json(...); return }
+```
+
+```typescript
+// frontend: in the download fetch
+import { useAnonymousStore } from '../../store/anonymousStore'
+
+async function downloadZip(projectId: string, filename: string) {
+  const token = useAnonymousStore.getState().getToken(projectId)
+  const headers: HeadersInit = token ? { 'X-Owner-Token': token } : {}
+  const res = await fetch(`/projects/${projectId}/export.zip`, { headers })
+  ...
+}
+```
+
+`useAnonymousStore.getState()` is safe to call outside React components (Zustand's `getState()` is always available).
+
+---
+
 ### Playwright localStorage seeding — `page.evaluate` not `page.addInitScript`
 
 To seed `localStorage` for a Zustand `persist` store before a page navigation:

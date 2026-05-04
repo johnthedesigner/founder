@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useUserStore } from '../../store/userStore'
+import { useConfigStore } from '../../store/configStore'
 import { listProjects } from '../../api/projects'
 import type { Project } from '../../api/projects'
 import { ProjectGrid } from './ProjectGrid'
@@ -8,6 +9,7 @@ import { ProjectGrid } from './ProjectGrid'
 export function HomePage() {
   const { user, isLoading, fetchUser } = useUserStore()
   const navigate = useNavigate()
+  const resetConfig = useConfigStore((s) => s.resetConfig)
   const [projects, setProjects] = useState<Project[]>([])
   const [projectsLoading, setProjectsLoading] = useState(false)
 
@@ -21,15 +23,23 @@ export function HomePage() {
     }
   }, [isLoading, user, navigate])
 
-  useEffect(() => {
-    if (user) {
-      setProjectsLoading(true)
-      listProjects()
-        .then(({ projects: p }) => setProjects(p))
-        .catch(() => setProjects([]))
-        .finally(() => setProjectsLoading(false))
-    }
+  const loadProjects = useCallback(() => {
+    if (!user) return
+    setProjectsLoading(true)
+    listProjects()
+      .then(({ projects: p }) => setProjects(p))
+      .catch(() => setProjects([]))
+      .finally(() => setProjectsLoading(false))
   }, [user])
+
+  useEffect(() => {
+    loadProjects()
+  }, [loadProjects])
+
+  function handleNewProject() {
+    resetConfig()
+    void navigate('/new')
+  }
 
   if (isLoading) {
     return (
@@ -53,11 +63,17 @@ export function HomePage() {
       <main className="mx-auto max-w-5xl px-6 py-10">
         <div className="mb-8 flex items-center justify-between">
           <h2 className="text-lg font-medium text-gray-900">Your projects</h2>
+          <button
+            onClick={handleNewProject}
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition-colors"
+          >
+            New project
+          </button>
         </div>
         {projectsLoading ? (
           <p className="text-gray-400">Loading projects…</p>
         ) : (
-          <ProjectGrid projects={projects} />
+          <ProjectGrid projects={projects} onMutate={loadProjects} />
         )}
       </main>
     </div>

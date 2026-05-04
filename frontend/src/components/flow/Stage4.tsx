@@ -4,6 +4,7 @@ import { useUIStore } from '../../store/uiStore'
 import { useConfigStore } from '../../store/configStore'
 import { createProject } from '../../api/projects'
 import { useAnonymousStore } from '../../store/anonymousStore'
+import { Stage4RegistrationPrompt } from './Stage4RegistrationPrompt'
 
 async function downloadZip(projectId: string, filename: string) {
   const token = useAnonymousStore.getState().getToken(projectId)
@@ -226,23 +227,7 @@ export function Stage4() {
       </div>
 
       {/* Account prompt */}
-      <div className="rounded-lg border border-gray-100 bg-gray-50 px-4 py-3">
-        <p className="text-sm text-gray-600 mb-2">Create a free account to manage this project.</p>
-        <div className="flex gap-3">
-          <button
-            onClick={() => void navigate('/register')}
-            className="text-sm font-medium text-blue-600 hover:text-blue-700 hover:underline"
-          >
-            Create account
-          </button>
-          <button
-            onClick={() => void navigate('/login')}
-            className="text-sm font-medium text-gray-500 hover:text-gray-700 hover:underline"
-          >
-            Sign in
-          </button>
-        </div>
-      </div>
+      <Stage4RegistrationPrompt />
 
       {showFigma && <FigmaModal onClose={() => setShowFigma(false)} />}
     </div>

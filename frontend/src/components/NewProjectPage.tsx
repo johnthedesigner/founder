@@ -5,6 +5,7 @@ import { Stage1 } from './flow/Stage1'
 import { Stage2 } from './flow/Stage2'
 import { Stage3 } from './flow/Stage3'
 import { Stage4 } from './flow/Stage4'
+import { SaveIndicator } from './shared/SaveIndicator'
 
 const STAGES = [
   { label: 'Foundation' },
@@ -21,6 +22,7 @@ export function NewProjectPage() {
   const goBack = useUIStore((s) => s.goBack)
   const canAdvance = useUIStore((s) => s.canAdvance)
   const setCanAdvance = useUIStore((s) => s.setCanAdvance)
+  const savedProjectId = useUIStore((s) => s.savedProjectId)
 
   // Stages 1, 2, and 4 always allow advancing
   useEffect(() => {
@@ -33,8 +35,9 @@ export function NewProjectPage() {
   return (
     <div className="flex h-screen flex-col bg-gray-50">
       {/* Top bar */}
-      <header className="flex h-14 shrink-0 items-center border-b border-gray-200 bg-white px-6">
+      <header className="flex h-14 shrink-0 items-center justify-between border-b border-gray-200 bg-white px-6">
         <span className="text-sm font-semibold text-gray-900">Design System Generator</span>
+        {savedProjectId && <SaveIndicator />}
       </header>
 
       {/* Stage progress */}

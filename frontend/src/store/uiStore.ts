@@ -10,9 +10,11 @@ interface UIStore {
   canAdvance: boolean
   setCanAdvance: (v: boolean) => void
   savedProjectId: string | null
-  setSavedProjectId: (id: string) => void
+  setSavedProjectId: (id: string | null) => void
   isSaving: boolean
+  setIsSaving: (v: boolean) => void
   lastSavedAt: Date | null
+  setLastSavedAt: (d: Date | null) => void
 }
 
 export const useUIStore = create<UIStore>()((set) => ({
@@ -33,5 +35,7 @@ export const useUIStore = create<UIStore>()((set) => ({
   savedProjectId: null,
   setSavedProjectId: (id) => set({ savedProjectId: id }),
   isSaving: false,
+  setIsSaving: (v) => set({ isSaving: v }),
   lastSavedAt: null,
+  setLastSavedAt: (d) => set({ lastSavedAt: d }),
 }))

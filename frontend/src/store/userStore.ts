@@ -9,7 +9,7 @@ interface UserStore {
 
 export const useUserStore = create<UserStore>()((set) => ({
   user: null,
-  isLoading: false,
+  isLoading: true,
   fetchUser: async () => {
     set({ isLoading: true })
     try {
