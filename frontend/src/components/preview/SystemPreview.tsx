@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { useConfigStore } from '../../store/configStore'
 
-const READY_TIMEOUT_MS = 3000
+const READY_TIMEOUT_MS = 8000
+const PREVIEW_URL = import.meta.env.VITE_PREVIEW_SANDBOX_URL ?? 'http://localhost:5180'
 const DEBOUNCE_MS = 50
 
 function PreviewSkeleton() {
@@ -101,7 +102,7 @@ export function SystemPreview() {
     <div className="relative h-full w-full overflow-hidden rounded-lg border border-gray-200 bg-white">
       <iframe
         ref={iframeRef}
-        src="http://localhost:5180"
+        src={PREVIEW_URL}
         title="Design System Preview"
         className="h-full w-full border-none transition-opacity duration-200"
         style={{ opacity: ready ? 1 : 0 }}

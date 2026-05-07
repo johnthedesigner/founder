@@ -1,0 +1,242 @@
+{
+  "version": "1.0",
+  "projectId": "ds-3b82f6-saas",
+  "projectName": "Professional App Design System",
+  "generatedAt": "2026-05-07T11:57:10.519Z",
+  "config": {
+    "projectType": "saas",
+    "modes": [
+      "light"
+    ],
+    "componentScope": [
+      "forms",
+      "navigation"
+    ],
+    "primaryHex": "#3b82f6",
+    "colorDirection": "cool-professional",
+    "paletteId": null,
+    "neutralFamily": "slate",
+    "typeStyle": "geometric",
+    "displayFace": "Inter",
+    "bodyFace": "Inter",
+    "density": "balanced",
+    "personality": "professional",
+    "dimensionality": "subtle"
+  },
+  "tokens": {
+    "colorCount": 22,
+    "typographyCount": 20,
+    "spacingCount": 10,
+    "sampleColors": {
+      "color.action.primary": "#123c82",
+      "color.action.primary.hover": "#0c2855",
+      "color.action.primary.fg": "#f8fafb",
+      "color.action.secondary": "#e8f0fa",
+      "color.action.secondary.fg": "#0c0d0f",
+      "color.action.destructive": "#7d1515",
+      "color.action.destructive.fg": "#f8fafb",
+      "color.surface.default": "#f8fafb"
+    },
+    "fontFamilies": {
+      "display": "Inter",
+      "body": "Inter",
+      "code": "JetBrains Mono"
+    }
+  },
+  "components": [
+    {
+      "name": "Button",
+      "importPath": "components/button",
+      "variants": [
+        "primary",
+        "secondary",
+        "ghost",
+        "destructive"
+      ],
+      "sizes": [
+        "sm",
+        "md",
+        "lg"
+      ],
+      "defaultVariant": "primary",
+      "defaultSize": "md",
+      "tokenRefs": [
+        "--color-action-primary",
+        "--color-action-primary-fg",
+        "--button-padding-md",
+        "--button-border-radius",
+        "--button-font-weight"
+      ],
+      "accessibilityNotes": "Meets WCAG AA contrast for all variants. Focus ring visible via focus-visible. Disabled state uses opacity-50 and pointer-events-none.",
+      "usageGuidance": "Use primary for the main call-to-action. Use secondary for supporting actions. Use ghost for low-emphasis inline actions. Use destructive for irreversible actions."
+    },
+    {
+      "name": "Input",
+      "importPath": "components/input",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--input-background",
+        "--input-border-color",
+        "--input-border-color-focus",
+        "--input-color",
+        "--input-padding",
+        "--input-border-radius",
+        "--input-font-size"
+      ],
+      "accessibilityNotes": "Focus ring visible via focus-visible. Pair with FormField for label and error message accessibility.",
+      "usageGuidance": "Always wrap in FormField to provide an accessible label. Use the error prop on FormField to display validation messages."
+    },
+    {
+      "name": "Select",
+      "importPath": "components/select",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--select-background",
+        "--select-border-color",
+        "--select-border-radius",
+        "--select-font-size"
+      ],
+      "accessibilityNotes": "Uses Base UI Select which manages ARIA roles and keyboard navigation automatically.",
+      "usageGuidance": "Use for choosing from a list of 5 or more options. For fewer options, prefer Radio."
+    },
+    {
+      "name": "Checkbox",
+      "importPath": "components/checkbox",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--checkbox-size",
+        "--checkbox-border-radius",
+        "--checkbox-border-color",
+        "--checkbox-color-checked",
+        "--checkbox-color-checked-fg"
+      ],
+      "accessibilityNotes": "Checked state indicated via data-[checked] attribute. Focus ring visible via focus-visible.",
+      "usageGuidance": "Use for independent boolean options. Use a group of checkboxes for multi-select from a list."
+    },
+    {
+      "name": "Radio",
+      "importPath": "components/radio",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--radio-size",
+        "--radio-border-color",
+        "--radio-color-checked",
+        "--radio-gap"
+      ],
+      "accessibilityNotes": "Checked state indicated via data-[checked] attribute. Wrap in a RadioGroup for proper ARIA grouping.",
+      "usageGuidance": "Always wrap in a labeled RadioGroup. Use when only one option can be selected from a list."
+    },
+    {
+      "name": "Switch",
+      "importPath": "components/switch",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--switch-height",
+        "--switch-width",
+        "--switch-border-radius",
+        "--switch-color-checked",
+        "--switch-color-unchecked",
+        "--switch-thumb-background"
+      ],
+      "accessibilityNotes": "Checked state indicated via data-[checked] attribute. Rendered as a native button with role=\"switch\" via Base UI.",
+      "usageGuidance": "Use for immediate binary toggles that take effect without a form submit."
+    },
+    {
+      "name": "Slider",
+      "importPath": "components/slider",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--slider-track-height",
+        "--slider-track-background",
+        "--slider-thumb-size",
+        "--slider-range-color"
+      ],
+      "accessibilityNotes": "Keyboard navigable via arrow keys. Value announced by screen readers via aria-valuenow.",
+      "usageGuidance": "Use for selecting a value within a continuous range. Provide visible min/max labels for context."
+    },
+    {
+      "name": "Tabs",
+      "importPath": "components/tabs",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--tabs-border-color",
+        "--tab-color-active",
+        "--tab-color-inactive",
+        "--tab-font-size",
+        "--tab-font-weight-active",
+        "--tab-padding"
+      ],
+      "accessibilityNotes": "Arrow keys navigate between tabs. Active tab panel is linked via aria-controls.",
+      "usageGuidance": "Use to divide content into parallel sections of the same hierarchy. Avoid nesting tabs."
+    },
+    {
+      "name": "Menu",
+      "importPath": "components/menu",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--menu-background",
+        "--menu-border-color",
+        "--menu-border-radius",
+        "--menu-item-padding",
+        "--menu-item-color-hover"
+      ],
+      "accessibilityNotes": "Arrow keys navigate menu items. Escape closes the menu. Items have role=\"menuitem\".",
+      "usageGuidance": "Use for contextual actions accessible from a trigger button. Keep items under 10 for usability."
+    },
+    {
+      "name": "Form Field",
+      "importPath": "components/form-field",
+      "variants": [],
+      "sizes": [],
+      "defaultVariant": "",
+      "defaultSize": "",
+      "tokenRefs": [
+        "--form-field-gap",
+        "--form-field-label-font-size",
+        "--form-field-label-color",
+        "--form-field-hint-color",
+        "--form-field-error-color"
+      ],
+      "accessibilityNotes": "Label is associated with the field via aria-labelledby. Error messages are associated via aria-describedby. Required indicator is hidden from screen readers.",
+      "usageGuidance": "Always wrap form inputs in FormField. Pass the error message string to show validation state."
+    }
+  ],
+  "rules": [
+    "Always import components from their own directory (e.g. `./components/button/button`).",
+    "Never hard-code color hex values in component or page code. Reference CSS custom properties (e.g. `var(--color-action-primary)`) or use the generated component classes.",
+    "Never override component token variables inline. If a token value needs to change for a variant or context, regenerate with an updated config.",
+    "Wrap every form input in FormField to ensure accessible labels and error messages.",
+    "Button: use `variant=\"primary\"` for the main call-to-action per screen. Do not use two primary buttons side-by-side.",
+    "Button: use `variant=\"destructive\"` only for irreversible operations. Show a confirmation dialog before triggering the action.",
+    "Spacing: use the generated spacing tokens (space.component.* for intra-component spacing, space.layout.* for page-level spacing). Base unit is derived from density=\"balanced\".",
+    "Typography: display headings use font.family.display (Inter). Body text and UI labels use font.family.body (Inter).",
+    "Color: all interactive elements must meet WCAG AA contrast (4.5:1 for normal text, 3:1 for large text and UI components). The generated token set guarantees this for the semantic layer.",
+    "Dark mode: activate by setting `data-theme=\"dark\"` on the root element. Do not fork component files for dark mode; all tokens resolve automatically.",
+    "Do not import from `@base-ui-components/react` directly in application code. Import from the generated component wrappers instead."
+  ],
+  "corrections": []
+}

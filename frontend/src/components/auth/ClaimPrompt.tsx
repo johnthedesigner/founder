@@ -28,7 +28,7 @@ export function ClaimPrompt() {
 
   useEffect(() => {
     if (entries.length === 0) {
-      void navigate('/')
+      void navigate('/projects')
     }
   }, [entries.length, navigate])
 
@@ -78,7 +78,7 @@ export function ClaimPrompt() {
         </ul>
 
         <button
-          onClick={() => void navigate('/')}
+          onClick={() => void navigate('/projects')}
           className="mt-6 w-full rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           Continue to dashboard

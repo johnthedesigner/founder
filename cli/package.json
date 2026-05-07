@@ -1,11 +1,22 @@
 {
   "name": "@ds-gen/cli",
-  "version": "0.0.0",
+  "version": "0.1.0",
+  "description": "Design System Generator CLI",
+  "main": "dist/index.js",
   "bin": {
-    "ds-gen": "src/index.ts"
+    "ds-gen": "dist/index.js"
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && chmod +x dist/index.js",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "fs-extra": "^11.2.0",
+    "prompts": "^2.4.2"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/node": "^22.0.0",
+    "@types/prompts": "^2.4.9"
   }
 }

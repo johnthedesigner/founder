@@ -1,5 +1,6 @@
 import { Stage1ProjectType } from './Stage1ProjectType'
 import { Stage1BrandAssets } from './Stage1BrandAssets'
+import { Stage1FunctionalColors } from './Stage1FunctionalColors'
 import { Stage1ModeSelect } from './Stage1ModeSelect'
 
 export function Stage1() {
@@ -17,6 +18,10 @@ export function Stage1() {
       <hr className="border-gray-100" />
 
       <Stage1BrandAssets />
+
+      <hr className="border-gray-100" />
+
+      <Stage1FunctionalColors />
 
       <hr className="border-gray-100" />
 

@@ -1,6 +1,9 @@
-import type { ProjectConfig } from '@ds-gen/types'
+import type { FunctionalColorRole, ProjectConfig, ProjectType } from '@ds-gen/types'
 
-const SHADE_KEYS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
+const SHADE_KEYS = [
+  50, 100, 150, 200, 250, 300, 350, 400, 450, 500,
+  550, 600, 650, 700, 750, 800, 850, 900, 950,
+]
 
 const RADIUS_SIZES = ['sm', 'md', 'lg', 'full'] as const
 
@@ -14,6 +17,19 @@ const TYPE_STEPS = [
   { name: 'base', ratio: 0 },
   { name: 'sm', ratio: -1 },
 ]
+
+const FUNCTIONAL_ROLE_LABELS: Record<FunctionalColorRole, string> = {
+  error: 'Error',
+  warning: 'Warning',
+  success: 'Success',
+  info: 'Info',
+}
+
+const PROJECT_TYPE_FUNCTIONAL: Record<ProjectType, FunctionalColorRole[]> = {
+  saas: ['error', 'warning', 'success', 'info'],
+  marketing: ['error'],
+  mobile: ['error', 'warning', 'success', 'info'],
+}
 
 function scaledSize(ratio: number, scaleRatio: number): number {
   return Math.round(16 * Math.pow(scaleRatio, ratio))
@@ -32,7 +48,35 @@ const SECTION: React.CSSProperties = {
   marginBottom: '28px',
 }
 
+function ColorScaleRow({ label, varPrefix }: { label: string; varPrefix: string }) {
+  return (
+    <section style={SECTION}>
+      <div style={SECTION_LABEL}>{label}</div>
+      <div style={{ display: 'flex', gap: '3px' }}>
+        {SHADE_KEYS.map((shade) => (
+          <div key={shade} style={{ flex: 1, textAlign: 'center' }}>
+            <div
+              style={{
+                height: '36px',
+                borderRadius: 'var(--radius-sm)',
+                backgroundColor: `var(--color-${varPrefix}-${shade})`,
+                marginBottom: '4px',
+              }}
+            />
+            <span style={{ fontSize: '8px', color: '#9ca3af' }}>{shade}</span>
+          </div>
+        ))}
+      </div>
+    </section>
+  )
+}
+
 export function SystemPreviewLayout({ config }: { config: ProjectConfig }) {
+  const activeRoles =
+    config.color.functionalColors?.enabled ??
+    PROJECT_TYPE_FUNCTIONAL[config.projectType] ??
+    []
+
   return (
     <div
       style={{
@@ -42,45 +86,23 @@ export function SystemPreviewLayout({ config }: { config: ProjectConfig }) {
         minHeight: '100vh',
       }}
     >
-      {/* Primary scale */}
-      <section style={SECTION}>
-        <div style={SECTION_LABEL}>Primary</div>
-        <div style={{ display: 'flex', gap: '3px' }}>
-          {SHADE_KEYS.map((shade) => (
-            <div key={shade} style={{ flex: 1, textAlign: 'center' }}>
-              <div
-                style={{
-                  height: '36px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: `var(--color-primary-${shade})`,
-                  marginBottom: '4px',
-                }}
-              />
-              <span style={{ fontSize: '9px', color: '#9ca3af' }}>{shade}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      <ColorScaleRow label="Primary" varPrefix="primary" />
+      <ColorScaleRow label="Neutral" varPrefix="neutral" />
 
-      {/* Neutral scale */}
-      <section style={SECTION}>
-        <div style={SECTION_LABEL}>Neutral</div>
-        <div style={{ display: 'flex', gap: '3px' }}>
-          {SHADE_KEYS.map((shade) => (
-            <div key={shade} style={{ flex: 1, textAlign: 'center' }}>
-              <div
-                style={{
-                  height: '36px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: `var(--color-neutral-${shade})`,
-                  marginBottom: '4px',
-                }}
-              />
-              <span style={{ fontSize: '9px', color: '#9ca3af' }}>{shade}</span>
-            </div>
-          ))}
-        </div>
-      </section>
+      {config.color.secondaryHex && (
+        <ColorScaleRow label="Secondary" varPrefix="secondary" />
+      )}
+      {config.color.accentHex && (
+        <ColorScaleRow label="Accent" varPrefix="accent" />
+      )}
+
+      {activeRoles.map((role) => (
+        <ColorScaleRow
+          key={role}
+          label={FUNCTIONAL_ROLE_LABELS[role]}
+          varPrefix={role}
+        />
+      ))}
 
       {/* Type scale */}
       <section style={SECTION}>

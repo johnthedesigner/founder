@@ -46,8 +46,8 @@ test('register → verify email → login → home', async ({ page, request }) =
   await page.getByRole('button', { name: 'Sign in' }).click()
 
   // Assert home page loaded
-  await page.waitForURL('/')
-  await expect(page).toHaveURL('/')
+  await page.waitForURL('/projects')
+  await expect(page).toHaveURL('/projects')
 })
 
 // ---- Journey: login with wrong password shows error ----
@@ -64,8 +64,8 @@ test('login with wrong password shows error message', async ({ page }) => {
 
 // ---- Journey 3.2.1: unauthenticated user redirected to /login ----
 
-test('unauthenticated visit to / redirects to /login', async ({ page }) => {
-  await page.goto('/')
+test('unauthenticated visit to /projects redirects to /login', async ({ page }) => {
+  await page.goto('/projects')
   await page.waitForURL('/login')
   await expect(page).toHaveURL('/login')
 })

@@ -10,6 +10,7 @@ import {
   claimProject,
 } from '../services/project'
 import type { EditAuth } from '../services/project'
+import { invalidateSpecCache } from './generate'
 
 export const projectsRouter = Router()
 
@@ -98,6 +99,7 @@ projectsRouter.patch('/:id', optionalAuth, async (req: Request, res: Response) =
   } else if (result === 'invalid') {
     res.status(400).json({ error: 'Invalid config after merge' })
   } else {
+    invalidateSpecCache(req.params.id!)
     res.json({ project: result })
   }
 })

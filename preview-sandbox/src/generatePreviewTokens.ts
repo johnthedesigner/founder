@@ -1,19 +1,12 @@
 import { generateColorScale } from '@pipeline/palette/generator'
+import { deriveFunctionalColors } from '@pipeline/palette/functional'
 import {
   NEUTRAL_SEEDS,
   DENSITY_BASE_PX,
   PERSONALITY_RADII,
   DIMENSIONALITY_SHADOWS,
 } from '@pipeline/palette/personalities'
-import type { ProjectConfig, ColorDirection } from '@ds-gen/types'
-
-const COLOR_DIRECTION_HEX: Record<ColorDirection, string> = {
-  'cool-professional': '#3b82f6',
-  'warm-approachable': '#f97316',
-  'bold-high-contrast': '#6366f1',
-  'neutral-minimal': '#64748b',
-  'earth-tones': '#78716c',
-}
+import type { ProjectConfig } from '@ds-gen/types'
 
 const TYPE_STYLE_FONTS: Record<
   string,
@@ -42,12 +35,7 @@ const TYPE_STYLE_FONTS: Record<
 }
 
 export function generatePreviewTokens(config: ProjectConfig): string {
-  const primaryHex =
-    config.color.source === 'provided'
-      ? config.color.primaryHex
-      : COLOR_DIRECTION_HEX[config.color.colorDirection ?? 'cool-professional']
-
-  const primaryScale = generateColorScale(primaryHex)
+  const primaryScale = generateColorScale(config.color.primaryHex)
   const neutralSeed =
     NEUTRAL_SEEDS[config.color.neutralFamily] ?? NEUTRAL_SEEDS['slate']
   const neutralScale = generateColorScale(neutralSeed)
@@ -69,6 +57,27 @@ export function generatePreviewTokens(config: ProjectConfig): string {
   }
   for (const [shade, hex] of Object.entries(neutralScale)) {
     tokens[`--color-neutral-${shade}`] = hex
+  }
+
+  if (config.color.secondaryHex) {
+    const secondaryScale = generateColorScale(config.color.secondaryHex)
+    for (const [shade, hex] of Object.entries(secondaryScale)) {
+      tokens[`--color-secondary-${shade}`] = hex
+    }
+  }
+
+  if (config.color.accentHex) {
+    const accentScale = generateColorScale(config.color.accentHex)
+    for (const [shade, hex] of Object.entries(accentScale)) {
+      tokens[`--color-accent-${shade}`] = hex
+    }
+  }
+
+  const functionalScales = deriveFunctionalColors(config.color, config.projectType)
+  for (const [role, scale] of Object.entries(functionalScales)) {
+    for (const [shade, hex] of Object.entries(scale)) {
+      tokens[`--color-${role}-${shade}`] = hex
+    }
   }
 
   tokens['--font-display'] = displayFace

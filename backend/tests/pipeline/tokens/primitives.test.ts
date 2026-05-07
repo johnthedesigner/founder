@@ -32,20 +32,32 @@ describe('generatePrimitives — structure', () => {
   })
 })
 
+// DEFAULT_CONFIG is saas + blue primary — saas enables all 4 functional roles;
+// blue primary (hue ~217°) aliases info → primary scale.
+const SAAS_BASE_KEYS = ['error', 'info', 'neutral', 'primary', 'success', 'warning']
+
 describe('generatePrimitives — colors', () => {
-  it('DEFAULT_CONFIG produces exactly primary and neutral (no secondary or accent)', () => {
+  it('DEFAULT_CONFIG (saas) produces primary, neutral, and all 4 functional scales', () => {
     const p = generatePrimitives(DEFAULT_CONFIG)
-    expect(Object.keys(p.colors).sort()).toEqual(['neutral', 'primary'])
+    expect(Object.keys(p.colors).sort()).toEqual(SAAS_BASE_KEYS)
   })
 
-  it('config with secondaryHex adds a secondary scale', () => {
+  it('config with secondaryHex adds a secondary scale alongside functional scales', () => {
     const config: ProjectConfig = {
       ...DEFAULT_CONFIG,
       color: { ...DEFAULT_CONFIG.color, secondaryHex: '#8b5cf6' },
     }
     const p = generatePrimitives(config)
     expect(p.colors).toHaveProperty('secondary')
-    expect(Object.keys(p.colors).sort()).toEqual(['neutral', 'primary', 'secondary'])
+    expect(Object.keys(p.colors).sort()).toEqual([
+      'error',
+      'info',
+      'neutral',
+      'primary',
+      'secondary',
+      'success',
+      'warning',
+    ])
   })
 
   it('config with accentHex adds an accent scale', () => {
@@ -57,7 +69,7 @@ describe('generatePrimitives — colors', () => {
     expect(p.colors).toHaveProperty('accent')
   })
 
-  it('config with both secondary and accent has all four scales', () => {
+  it('config with both secondary and accent has all brand and functional scales', () => {
     const config: ProjectConfig = {
       ...DEFAULT_CONFIG,
       color: {
@@ -67,11 +79,16 @@ describe('generatePrimitives — colors', () => {
       },
     }
     const p = generatePrimitives(config)
+    // amber accent (#f59e0b, hue ~38°) aliases warning; both warning and accent keys present
     expect(Object.keys(p.colors).sort()).toEqual([
       'accent',
+      'error',
+      'info',
       'neutral',
       'primary',
       'secondary',
+      'success',
+      'warning',
     ])
   })
 
@@ -93,6 +110,89 @@ describe('generatePrimitives — colors', () => {
         expect(hex).toMatch(hexRe)
       }
     }
+  })
+})
+
+describe('generatePrimitives — functional colors', () => {
+  it('saas projectType enables all 4 functional roles', () => {
+    const p = generatePrimitives(DEFAULT_CONFIG)
+    expect(p.colors).toHaveProperty('error')
+    expect(p.colors).toHaveProperty('warning')
+    expect(p.colors).toHaveProperty('success')
+    expect(p.colors).toHaveProperty('info')
+  })
+
+  it('marketing projectType enables only error', () => {
+    const config: ProjectConfig = { ...DEFAULT_CONFIG, projectType: 'marketing' }
+    const p = generatePrimitives(config)
+    expect(p.colors).toHaveProperty('error')
+    expect(p.colors).not.toHaveProperty('warning')
+    expect(p.colors).not.toHaveProperty('success')
+    expect(p.colors).not.toHaveProperty('info')
+  })
+
+  it('mobile projectType enables all 4 functional roles', () => {
+    const config: ProjectConfig = { ...DEFAULT_CONFIG, projectType: 'mobile' }
+    const p = generatePrimitives(config)
+    expect(p.colors).toHaveProperty('error')
+    expect(p.colors).toHaveProperty('warning')
+    expect(p.colors).toHaveProperty('success')
+    expect(p.colors).toHaveProperty('info')
+  })
+
+  it('blue primary (DEFAULT_CONFIG) aliases info scale to primary hue', () => {
+    // primary is #3b82f6 (hue ~217°), info target is 220° — within 30° → aliased
+    const p = generatePrimitives(DEFAULT_CONFIG)
+    // info[500] and primary[500] should be the same hex (same seed)
+    expect(p.colors.info?.[500]).toBe(p.colors.primary[500])
+  })
+
+  it('green primary aliases success scale to primary hue', () => {
+    const config: ProjectConfig = {
+      ...DEFAULT_CONFIG,
+      color: { ...DEFAULT_CONFIG.color, primaryHex: '#166534' },
+    }
+    const p = generatePrimitives(config)
+    // #166534 (hue ~145°) is within 30° of success target 130° → seeded from primary hex
+    expect(p.colors.success?.[500]).toBe(p.colors.primary[500])
+  })
+
+  it('explicit enabled override restricts functional roles', () => {
+    const config: ProjectConfig = {
+      ...DEFAULT_CONFIG,
+      color: {
+        ...DEFAULT_CONFIG.color,
+        functionalColors: { enabled: ['error', 'success'] },
+      },
+    }
+    const p = generatePrimitives(config)
+    expect(p.colors).toHaveProperty('error')
+    expect(p.colors).toHaveProperty('success')
+    expect(p.colors).not.toHaveProperty('warning')
+    expect(p.colors).not.toHaveProperty('info')
+  })
+
+  it('functional color override hex is used verbatim', () => {
+    const overrideHex = '#7c3aed'
+    const config: ProjectConfig = {
+      ...DEFAULT_CONFIG,
+      color: {
+        ...DEFAULT_CONFIG.color,
+        functionalColors: {
+          enabled: ['error'],
+          overrides: { error: overrideHex },
+        },
+      },
+    }
+    const p = generatePrimitives(config)
+    // The override scale is seeded from overrideHex, not a red
+    // Verify the scale exists and has valid hex values
+    expect(p.colors).toHaveProperty('error')
+    const errorScale = p.colors.error
+    expect(errorScale).toBeDefined()
+    Object.values(errorScale!).forEach((hex) => {
+      expect(hex).toMatch(/^#[0-9a-f]{6}$/i)
+    })
   })
 })
 

@@ -1,0 +1,80 @@
+import type { Config } from 'tailwindcss'
+
+const config: Config = {
+  theme: {
+    extend: {
+      colors: {
+      'action-primary': 'var(--color-action-primary)',
+      'action-primary-hover': 'var(--color-action-primary-hover)',
+      'action-primary-fg': 'var(--color-action-primary-fg)',
+      'action-secondary': 'var(--color-action-secondary)',
+      'action-secondary-fg': 'var(--color-action-secondary-fg)',
+      'action-destructive': 'var(--color-action-destructive)',
+      'action-destructive-fg': 'var(--color-action-destructive-fg)',
+      'surface-default': 'var(--color-surface-default)',
+      'surface-raised': 'var(--color-surface-raised)',
+      'surface-overlay': 'var(--color-surface-overlay)',
+      'surface-subtle': 'var(--color-surface-subtle)',
+      'text-primary': 'var(--color-text-primary)',
+      'text-secondary': 'var(--color-text-secondary)',
+      'text-disabled': 'var(--color-text-disabled)',
+      'text-on-action': 'var(--color-text-on-action)',
+      'border-default': 'var(--color-border-default)',
+      'border-strong': 'var(--color-border-strong)',
+      'border-action': 'var(--color-border-action)',
+      'feedback-success': 'var(--color-feedback-success)',
+      'feedback-warning': 'var(--color-feedback-warning)',
+      'feedback-error': 'var(--color-feedback-error)',
+      'feedback-info': 'var(--color-feedback-info)',
+      },
+      fontFamily: {
+      'display': 'var(--font-family-display)',
+      'body': 'var(--font-family-body)',
+      'ui': 'var(--font-family-ui)',
+      'code': 'var(--font-family-code)',
+      },
+      fontSize: {
+      'xs': 'var(--font-size-xs)',
+      'sm': 'var(--font-size-sm)',
+      'base': 'var(--font-size-base)',
+      'lg': 'var(--font-size-lg)',
+      'xl': 'var(--font-size-xl)',
+      '2xl': 'var(--font-size-2xl)',
+      '3xl': 'var(--font-size-3xl)',
+      '4xl': 'var(--font-size-4xl)',
+      '5xl': 'var(--font-size-5xl)',
+      },
+      fontWeight: {
+      'normal': 'var(--font-weight-normal)',
+      'medium': 'var(--font-weight-medium)',
+      'semibold': 'var(--font-weight-semibold)',
+      'bold': 'var(--font-weight-bold)',
+      },
+      spacing: {
+      'component-xs': 'var(--space-component-xs)',
+      'component-sm': 'var(--space-component-sm)',
+      'component-md': 'var(--space-component-md)',
+      'component-lg': 'var(--space-component-lg)',
+      'component-xl': 'var(--space-component-xl)',
+      'layout-xs': 'var(--space-layout-xs)',
+      'layout-sm': 'var(--space-layout-sm)',
+      'layout-md': 'var(--space-layout-md)',
+      'layout-lg': 'var(--space-layout-lg)',
+      'layout-xl': 'var(--space-layout-xl)',
+      },
+      borderRadius: {
+      'sm': 'var(--radius-sm)',
+      'md': 'var(--radius-md)',
+      'lg': 'var(--radius-lg)',
+      'full': 'var(--radius-full)',
+      },
+      boxShadow: {
+      'sm': 'var(--shadow-sm)',
+      'md': 'var(--shadow-md)',
+      'lg': 'var(--shadow-lg)',
+      },
+    },
+  },
+}
+
+export default config

@@ -174,8 +174,8 @@ test('register → login → claim anonymous project → appears in home grid', 
   // Claim the project
   await page.getByRole('button', { name: 'Claim' }).click()
 
-  // After claiming, all entries are gone → ClaimPrompt auto-navigates to /
-  await page.waitForURL('/', { timeout: 10_000 })
+  // After claiming, all entries are gone → ClaimPrompt auto-navigates to /projects
+  await page.waitForURL('/projects', { timeout: 10_000 })
 
   // localStorage entry should be cleared (entries array is now empty)
   const stored = await page.evaluate((key: string) => localStorage.getItem(key), ANON_STORAGE_KEY)

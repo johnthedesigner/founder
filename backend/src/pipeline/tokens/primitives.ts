@@ -1,5 +1,6 @@
 import type { ProjectConfig, PrimitiveTokenSet } from '@ds-gen/types'
 import { generateColorScale } from '../palette/generator'
+import { deriveFunctionalColors } from '../palette/functional'
 import {
   DENSITY_BASE_PX,
   PERSONALITY_RADII,
@@ -38,6 +39,9 @@ export function generatePrimitives(config: ProjectConfig): PrimitiveTokenSet {
   if (config.color.accentHex) {
     colors.accent = generateColorScale(config.color.accentHex)
   }
+
+  const functionalScales = deriveFunctionalColors(config.color, config.projectType)
+  Object.assign(colors, functionalScales)
 
   const basePx = DENSITY_BASE_PX[config.shape.density]
   const spacing: Record<string, string> = {}

@@ -1,4 +1,5 @@
 import type { ProjectConfig, TypeStyle, Personality, Density, Dimensionality } from '@ds-gen/types'
+import { PALETTE_PRESETS } from '@ds-gen/types'
 
 const TYPE_STYLE_RATIONALE: Record<TypeStyle, string> = {
   geometric:
@@ -64,9 +65,17 @@ export function generateDecisions(config: ProjectConfig): string {
   const radiusRationale = PERSONALITY_RADIUS_RATIONALE[shape.personality]
   const spacingRationale = DENSITY_SPACING_RATIONALE[shape.density]
   const dimensionalityRationale = DIMENSIONALITY_RATIONALE[shape.dimensionality]
-  const colorRationale =
-    COLOR_DIRECTION_RATIONALE[color.colorDirection ?? 'cool-professional'] ??
-    `The primary color ${color.primaryHex} was used as the seed for scale generation.`
+  let colorRationale: string
+  if (color.paletteId) {
+    const preset = PALETTE_PRESETS.find((p) => p.id === color.paletteId)
+    colorRationale = preset
+      ? `The ${preset.name} preset palette was selected as the color foundation. ${preset.description}.`
+      : `The primary color ${color.primaryHex} was used as the seed for scale generation.`
+  } else {
+    colorRationale =
+      COLOR_DIRECTION_RATIONALE[color.colorDirection ?? 'cool-professional'] ??
+      `The primary color ${color.primaryHex} was used as the seed for scale generation.`
+  }
 
   return `# Design Decisions
 
@@ -96,7 +105,7 @@ The full border radius scale (radius.none, radius.sm, radius.md, radius.lg, radi
 
 ## Color Approach
 
-**Configuration:** primaryHex = \`${color.primaryHex}\`, colorDirection = \`${color.colorDirection ?? 'cool-professional'}\`, neutralFamily = \`${color.neutralFamily}\`
+**Configuration:** primaryHex = \`${color.primaryHex}\`, ${color.paletteId ? `paletteId = \`${color.paletteId}\`` : `colorDirection = \`${color.colorDirection ?? 'cool-professional'}\``}, neutralFamily = \`${color.neutralFamily}\`
 
 ${colorRationale}
 

@@ -7,6 +7,8 @@ export type {
   TypeStyle,
   Dimensionality,
   ColorSource,
+  FunctionalColorRole,
+  FunctionalColorsConfig,
   ColorDirection,
   ColorConfig,
   TypographyConfig,
@@ -23,12 +25,17 @@ export {
   TypeStyleSchema,
   DimensionalitySchema,
   ColorSourceSchema,
+  FunctionalColorRoleSchema,
+  FunctionalColorsConfigSchema,
   ColorDirectionSchema,
   ColorConfigSchema,
   TypographyConfigSchema,
   ShapeConfigSchema,
   ProjectConfigSchema,
 } from './config'
+
+export type { PalettePreset } from './presets'
+export { PALETTE_PRESETS } from './presets'
 
 export type {
   ColorScale,

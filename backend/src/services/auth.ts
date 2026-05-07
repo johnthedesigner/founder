@@ -12,6 +12,8 @@ import {
   insertSession,
   findSessionByJti,
   deleteSessionByJti,
+  findCliSessionByUserId,
+  deleteCliSessionByUserId,
   insertEmailVerificationToken,
   findEmailVerificationToken,
   markEmailVerificationTokenUsed,
@@ -162,6 +164,24 @@ export async function issueSession(
 export async function issueCliToken(userId: string): Promise<string> {
   const { cookie } = await issueSession(userId, 'cli', undefined, '30d')
   return cookie
+}
+
+// ---- getCliToken ----
+// Returns the token for the user's existing CLI session, or issues a new one.
+// Since the raw JWT isn't stored, we re-sign with the stored JTI on each call.
+// cliAuth validates by JTI lookup, so the re-signed token is fully valid.
+export async function getCliToken(userId: string): Promise<string> {
+  const session = await findCliSessionByUserId(userId)
+  if (session) {
+    return signJwt({ sub: userId, jti: session.jti }, '30d')
+  }
+  return issueCliToken(userId)
+}
+
+// ---- revokeCliToken ----
+
+export async function revokeCliToken(userId: string): Promise<void> {
+  await deleteCliSessionByUserId(userId)
 }
 
 // ---- logout ----

@@ -9,11 +9,12 @@ import type {
 import { generateColorScale } from '../palette/generator'
 import { contrastRatio, findAccessibleStep } from './accessibility'
 
-// Fixed-hue scales for feedback and destructive tokens — generated once at module load
-const RED_SCALE = generateColorScale('#ef4444')
-const GREEN_SCALE = generateColorScale('#22c55e')
-const AMBER_SCALE = generateColorScale('#f59e0b')
-const BLUE_SCALE = generateColorScale('#3b82f6')
+// Fallback scales used when primitives.colors lacks palette-derived functional scales,
+// and for the destructive action token which always uses red regardless of palette.
+const FALLBACK_RED = generateColorScale('#ef4444')
+const FALLBACK_GREEN = generateColorScale('#22c55e')
+const FALLBACK_AMBER = generateColorScale('#f59e0b')
+const FALLBACK_BLUE = generateColorScale('#3b82f6')
 
 const WHITE = '#ffffff'
 
@@ -26,13 +27,17 @@ function resolveColorTokens(
   isDark: boolean,
 ): Record<string, string> {
   const { primary, neutral } = primitives.colors
+  const errorScale = primitives.colors.error ?? FALLBACK_RED
+  const successScale = primitives.colors.success ?? FALLBACK_GREEN
+  const warningScale = primitives.colors.warning ?? FALLBACK_AMBER
+  const infoScale = primitives.colors.info ?? FALLBACK_BLUE
   return {
     'color.action.primary': isDark ? s(primary, 400) : s(primary, 600),
     'color.action.primary.hover': isDark ? s(primary, 300) : s(primary, 700),
     'color.action.primary.fg': s(neutral, 50),
     'color.action.secondary': isDark ? s(neutral, 800) : s(neutral, 100),
     'color.action.secondary.fg': isDark ? s(neutral, 50) : s(neutral, 900),
-    'color.action.destructive': isDark ? s(RED_SCALE, 400) : s(RED_SCALE, 600),
+    'color.action.destructive': isDark ? s(FALLBACK_RED, 400) : s(FALLBACK_RED, 600),
     'color.action.destructive.fg': s(neutral, 50),
     'color.surface.default': isDark ? s(neutral, 950) : s(neutral, 50),
     'color.surface.raised': isDark ? s(neutral, 900) : WHITE,
@@ -45,10 +50,10 @@ function resolveColorTokens(
     'color.border.default': isDark ? s(neutral, 700) : s(neutral, 200),
     'color.border.strong': isDark ? s(neutral, 500) : s(neutral, 400),
     'color.border.action': isDark ? s(primary, 400) : s(primary, 600),
-    'color.feedback.success': isDark ? s(GREEN_SCALE, 400) : s(GREEN_SCALE, 600),
-    'color.feedback.warning': isDark ? s(AMBER_SCALE, 400) : s(AMBER_SCALE, 600),
-    'color.feedback.error': isDark ? s(RED_SCALE, 400) : s(RED_SCALE, 600),
-    'color.feedback.info': isDark ? s(BLUE_SCALE, 400) : s(BLUE_SCALE, 600),
+    'color.feedback.success': isDark ? s(successScale, 400) : s(successScale, 600),
+    'color.feedback.warning': isDark ? s(warningScale, 400) : s(warningScale, 600),
+    'color.feedback.error': isDark ? s(errorScale, 400) : s(errorScale, 600),
+    'color.feedback.info': isDark ? s(infoScale, 400) : s(infoScale, 600),
   }
 }
 

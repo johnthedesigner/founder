@@ -28,6 +28,18 @@ export async function updateSessionLastActive(jti: string): Promise<void> {
   await query('UPDATE user_sessions SET last_active_at = now() WHERE jti = $1', [jti])
 }
 
+export async function findCliSessionByUserId(userId: string): Promise<UserSessionRow | null> {
+  const rows = await query<UserSessionRow>(
+    "SELECT * FROM user_sessions WHERE user_id = $1 AND device_hint = 'cli' ORDER BY created_at DESC LIMIT 1",
+    [userId],
+  )
+  return rows[0] ?? null
+}
+
+export async function deleteCliSessionByUserId(userId: string): Promise<void> {
+  await query("DELETE FROM user_sessions WHERE user_id = $1 AND device_hint = 'cli'", [userId])
+}
+
 // ---- Email verification tokens ----
 
 export async function insertEmailVerificationToken(data: {

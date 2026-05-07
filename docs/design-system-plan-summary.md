@@ -41,7 +41,14 @@ Account integration: registration and login are surfaced in-flow rather than blo
 
 ---
 
+## Phase 3b — Color System Expansion and UX Foundations
+7 named preset palettes replace the `colorDirection` enum; users configure up to 3 brand colors (primary, secondary, accent) via color pickers; functional/status colors (error, warning, success, info) are derived from the brand palette and enabled per project type. Preview shows all 19 generated shades. Stage 3 token summary includes color swatches. Landing page at `/` for unauthenticated users; project dashboard moved to `/projects`. Single root `npm run dev` starts frontend and preview-sandbox concurrently.
+
+**Status:** Complete
+
+---
+
 ## Phase 4 — CLI and Agent API
 CLI package (`@ds-gen/cli`) published to npm: `init` and `sync` commands, auth token flow, manifest-driven file writing with no generation logic in the CLI. Agent API rate limiting and in-process response cache. CLI auth token management in account settings. Agent API URL surfaced on the project export page.
 
-**Status:** Not started
+**Status:** Complete

@@ -36,8 +36,8 @@ test.describe('Phase 2 — creation flow', () => {
   test('1.2 project type change updates scope chips', async ({ page }) => {
     await page.goto('/new')
 
-    // initial state: 6 scope chips
-    const chips = page.locator('.inline-flex.rounded-full')
+    // initial state: 6 scope chips (bg-blue-50 targets only scope chips, not functional color chips)
+    const chips = page.locator('.inline-flex.rounded-full.bg-blue-50')
     await expect(chips).toHaveCount(6)
 
     // click Marketing Site
@@ -45,11 +45,11 @@ test.describe('Phase 2 — creation flow', () => {
 
     // 4 chips remain — no Overlays, no Data Display
     await expect(chips).toHaveCount(4)
-    await expect(page.locator('span.rounded-full', { hasText: 'Overlays' })).not.toBeVisible()
-    await expect(page.locator('span.rounded-full', { hasText: 'Data Display' })).not.toBeVisible()
+    await expect(page.locator('span.rounded-full.bg-blue-50', { hasText: 'Overlays' })).not.toBeVisible()
+    await expect(page.locator('span.rounded-full.bg-blue-50', { hasText: 'Data Display' })).not.toBeVisible()
   })
 
-  test('1.3 color direction change updates preview primary color', async ({ page }) => {
+  test('1.3 palette preset selection updates preview primary color', async ({ page }) => {
     await page.goto('/new')
 
     // wait for READY + initial CONFIG_UPDATE to have been processed
@@ -74,8 +74,8 @@ test.describe('Phase 2 — creation flow', () => {
         .trim(),
     )
 
-    // select Warm & Approachable
-    await page.getByRole('button', { name: /Warm & Approachable/i }).click()
+    // select "Forest & Gold" preset (primaryHex: #166534, a deep green — clearly differs from default blue)
+    await page.getByRole('button', { name: /Forest & Gold/i }).click()
 
     // wait for the CSS variable to change
     await frame!.waitForFunction(

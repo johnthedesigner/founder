@@ -66,7 +66,7 @@ async function apiRegisterVerifyBrowserLogin(
   await page.getByLabel('Email').fill(email)
   await page.getByLabel('Password').fill(password)
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await page.waitForURL('/', { timeout: 10_000 })
+  await page.waitForURL('/projects', { timeout: 10_000 })
 }
 
 // ---- Test 1: complete flow → register in-flow → "Check your email" ----
@@ -143,8 +143,8 @@ test('in-flow register → verify → login → claim anonymous project → navi
   await expect(page.getByText('Claim your projects')).toBeVisible({ timeout: 10_000 })
   await page.getByRole('button', { name: 'Claim' }).click()
 
-  // After claiming, ClaimPrompt navigates to /
-  await page.waitForURL('/', { timeout: 10_000 })
+  // After claiming, ClaimPrompt navigates to /projects
+  await page.waitForURL('/projects', { timeout: 10_000 })
 
   // Verify localStorage entry is cleared
   const stored = await page.evaluate((key: string) => localStorage.getItem(key), ANON_STORAGE_KEY)
@@ -204,8 +204,8 @@ test('return to saved project → config matches → PATCH fires on change → Z
     await route.continue()
   })
 
-  // Change color direction → triggers configStore update → auto-save debounce
-  await page.getByText('Warm & Approachable').click()
+  // Select a palette preset → triggers configStore update → auto-save debounce
+  await page.getByRole('button', { name: /Forest & Gold/i }).click()
 
   // Wait up to 1s for PATCH to fire (500ms debounce + small network margin)
   await page.waitForTimeout(1000)
@@ -254,7 +254,7 @@ test('home page: duplicate project → two cards; delete original → only copy 
   }, DEFAULT_CONFIG)
 
   // Navigate to home — project card should be visible
-  await page.goto('/')
+  await page.goto('/projects')
   await expect(page.getByRole('heading', { name: 'Manage Me', exact: true })).toBeVisible({ timeout: 10_000 })
 
   // Open overflow menu on the project card and duplicate

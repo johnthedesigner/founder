@@ -1,22 +1,31 @@
 import type { GeneratedSystem, ProjectConfig } from '@ds-gen/types'
+import { PALETTE_PRESETS } from '@ds-gen/types'
 
 const VERSION = '1.0'
 
 function deriveProjectName(config: ProjectConfig): string {
-  const directionLabel: Record<string, string> = {
-    'cool-professional': 'Professional',
-    'warm-approachable': 'Approachable',
-    'bold-high-contrast': 'Bold',
-    'neutral-minimal': 'Minimal',
-    'earth-tones': 'Natural',
-  }
   const typeLabel: Record<string, string> = {
     saas: 'App',
     marketing: 'Site',
     mobile: 'Mobile App',
   }
-  const prefix = directionLabel[config.color.colorDirection ?? 'cool-professional'] ?? 'Design'
   const suffix = typeLabel[config.projectType] ?? 'System'
+
+  let prefix: string
+  if (config.color.paletteId) {
+    const preset = PALETTE_PRESETS.find((p) => p.id === config.color.paletteId)
+    prefix = preset ? preset.name.split(' ')[0] : 'Custom'
+  } else {
+    const directionLabel: Record<string, string> = {
+      'cool-professional': 'Professional',
+      'warm-approachable': 'Approachable',
+      'bold-high-contrast': 'Bold',
+      'neutral-minimal': 'Minimal',
+      'earth-tones': 'Natural',
+    }
+    prefix = directionLabel[config.color.colorDirection ?? 'cool-professional'] ?? 'Design'
+  }
+
   return `${prefix} ${suffix} Design System`
 }
 
@@ -89,6 +98,7 @@ export function generateAgentSpec(system: GeneratedSystem, config: ProjectConfig
       componentScope: config.componentScope,
       primaryHex: config.color.primaryHex,
       colorDirection: config.color.colorDirection ?? null,
+      paletteId: config.color.paletteId ?? null,
       neutralFamily: config.color.neutralFamily,
       typeStyle: config.typography.typeStyle,
       displayFace: config.typography.displayFace,

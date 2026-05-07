@@ -25,3 +25,11 @@ export async function logout(): Promise<void> {
 export async function getMe(): Promise<{ user: User }> {
   return apiRequest('GET', '/auth/me')
 }
+
+export async function getCliToken(): Promise<{ token: string }> {
+  return apiRequest('GET', '/auth/cli-token')
+}
+
+export async function revokeCliToken(): Promise<void> {
+  return apiRequest('DELETE', '/auth/cli-token')
+}

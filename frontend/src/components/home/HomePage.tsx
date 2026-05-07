@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useUserStore } from '../../store/userStore'
 import { useConfigStore } from '../../store/configStore'
 import { listProjects } from '../../api/projects'
@@ -56,7 +56,12 @@ export function HomePage() {
       <header className="border-b border-gray-200 bg-white px-6 py-4">
         <div className="mx-auto flex max-w-5xl items-center justify-between">
           <h1 className="text-xl font-semibold text-gray-900">Design System Generator</h1>
-          <span className="text-sm text-gray-500">{user.email}</span>
+          <div className="flex items-center gap-4">
+            <Link to="/settings" className="text-sm text-gray-500 hover:text-gray-700 transition-colors">
+              Settings
+            </Link>
+            <span className="text-sm text-gray-400">{user.email}</span>
+          </div>
         </div>
       </header>
 

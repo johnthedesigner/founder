@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import type { ProjectConfig } from '@ds-gen/types'
+import type { ProjectConfig, ColorConfig } from '@ds-gen/types'
 import { ProjectConfigSchema } from '@ds-gen/types'
 
 const FLOW_CONFIG_KEY = 'ds-gen-flow-config'
@@ -45,6 +45,7 @@ function loadStoredConfig(): ProjectConfig {
 interface ConfigStore {
   config: ProjectConfig
   setConfig: (partial: Partial<ProjectConfig>) => void
+  setColor: (partial: Partial<ColorConfig>) => void
   resetConfig: () => void
 }
 
@@ -57,6 +58,19 @@ export const useConfigStore = create<ConfigStore>()((set) => ({
         localStorage.setItem(FLOW_CONFIG_KEY, JSON.stringify(updated))
       } catch {
         // ignore — private browsing or storage full
+      }
+      return { config: updated }
+    }),
+  setColor: (partial) =>
+    set((state) => {
+      const updated = {
+        ...state.config,
+        color: { ...state.config.color, ...partial },
+      }
+      try {
+        localStorage.setItem(FLOW_CONFIG_KEY, JSON.stringify(updated))
+      } catch {
+        // ignore
       }
       return { config: updated }
     }),

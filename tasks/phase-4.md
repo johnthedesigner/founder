@@ -1,7 +1,7 @@
 # Phase 4 — CLI and Agent API
 
-> **Status:** Not started
-> **Depends on:** Phase 3 complete (all tasks marked `[x]`, all tests passing)
+> **Status:** In progress
+> **Depends on:** Phase 3b complete (all tasks marked `[x]`, all tests passing)
 > **Reference:** `docs/design-system-dev-plan.md` § Phase 4 — CLI and Agent API
 
 ---
@@ -18,9 +18,9 @@ No new database migrations are required. The CLI manifest endpoint (`GET /api/v1
 
 ### Task 4.1 — CLI package (`@ds-gen/cli`)
 
-> **Status:** `[ ]` Not started
-> **Session:** —
-> **Depends on:** Phase 3 complete
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-07
+> **Depends on:** Phase 3b complete
 
 **What this task implements:**
 The `cli/` package is set up with TypeScript, builds to a standalone JS entry point, and implements `init` and `sync` commands against the existing manifest endpoint. Auth token is read from `~/.ds-gen/config.json`; if missing, the CLI prompts for it and saves it.
@@ -53,8 +53,8 @@ The `cli/` package is set up with TypeScript, builds to a standalone JS entry po
 
 ### Task 4.2 — Account settings page with CLI token
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-07
 > **Depends on:** Task 4.1
 
 **What this task implements:**
@@ -85,8 +85,8 @@ A `/settings` page accessible from the home page header. Shows one section: "CLI
 
 ### Task 4.3 — Agent API hardening and frontend exposure
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-07
 > **Depends on:** Task 4.2
 
 **What this task implements:**
@@ -115,8 +115,8 @@ The existing `GET /api/v1/systems/:projectId/spec` endpoint gains rate limiting 
 
 ### Task 4.4 — Playwright Phase 4 tests
 
-> **Status:** `[ ]` Not started
-> **Session:** —
+> **Status:** `[x]` Complete
+> **Session:** 2026-05-07
 > **Depends on:** Tasks 4.1, 4.2, 4.3
 
 **What this task implements:**
@@ -185,9 +185,22 @@ Run this checklist before marking the phase complete.
 
 *(Tasks are compressed to this format once complete. Full details live in the session log.)*
 
-<!--
-### Task 4.X — [Task name] ✓
-**Output:** [One sentence: what was built.]
-**Key decisions:** [Any non-obvious choices made.]
-**Session:** [Date / SESSION_LOG pointer]
--->
+### Task 4.4 — Playwright Phase 4 tests ✓
+**Output:** `frontend/tests/e2e/phase-4.spec.ts` with 4 tests: (1) CLI init writes `tokens/`, `components/`, `docs/` + meta file with correct projectId; (2) CLI sync updates `generatedAt` timestamp; (3) agent API GET /spec returns 200 with valid `tokens`, `components`, `rules` shape; (4) agent API returns 404 for unknown project. Added `workers: 1` to `playwright.config.ts` to prevent parallel-worker races against the shared test DB. All 25 tests passing.
+**Key decisions:** `workers: 1` in playwright.config.ts — parallel workers sharing one backend DB caused intermittent race conditions on user registration; sequential execution eliminates these without any test logic changes. Tests assert against the actual spec shape (`rules` is a `string[]`, not an object) rather than the journey doc description which was speculative. Temp dirs cleaned up via `fs.rmSync` in `finally` blocks.
+**Session:** 2026-05-07
+
+### Task 4.3 — Agent API hardening and frontend exposure ✓
+**Output:** In-process `specCache` Map with 60s TTL on the spec endpoint; `invalidateSpecCache(projectId)` exported and called by the PATCH handler; `express-rate-limit` at 60 req/min with `skip: req.user` (authenticated owners bypass); `clearSpecCache()` and `specRateLimiter` exported for test reset; Agent API card added to `Stage4.tsx` (shown only when `savedProjectId` is set) with copy button; 5 new tests (cache hit, cache invalidation on PATCH, 404 non-caching, 429 after 60 requests, authenticated bypass).
+**Key decisions:** `clearSpecCache()` separate from `invalidateSpecCache(id)` — tests need to clear all entries in `beforeEach` to prevent cross-test bleed; `optionalAuth` added before rate limiter on spec route so `req.user` is populated for authenticated callers; `specRateLimiter.resetKey(ip)` called in `beforeEach` so 61-request rate limit test doesn't exhaust limits for the rest of the suite.
+**Session:** 2026-05-07
+
+### Task 4.2 — Account settings page with CLI token ✓
+**Output:** `GET /auth/cli-token` and `DELETE /auth/cli-token` backend routes; `findCliSessionByUserId` / `deleteCliSessionByUserId` session queries; `getCliToken(userId)` re-signs JWT with stored JTI (no schema change needed); `SettingsPage` at `/settings` (auth-guarded, redirects to `/login`); `CliTokenSection` with blur/reveal toggle, copy button, revoke-and-regenerate; settings link added to home page header.
+**Key decisions:** `GET /auth/cli-token` re-signs the existing JTI rather than storing the raw JWT — cliAuth validates by JTI lookup so the re-signed token is functionally identical; "revoke and regenerate" is DELETE then re-GET (two calls) rather than a single atomic endpoint, keeping each endpoint's responsibility clear.
+**Session:** 2026-05-07
+
+### Task 4.1 — CLI package (`@ds-gen/cli`) ✓
+**Output:** `cli/` package with `init` and `sync` commands; native fetch (Node 18+); `fs-extra` for file writing; `prompts` for interactive token entry; token resolution order: `--token` flag → `DS_GEN_TOKEN` env → `~/.ds-gen/config.json` → interactive prompt (saved to config); `DS_GEN_API_URL` env / `--api-url` flag for base URL override; `build` script compiles to CommonJS and `chmod +x` the entry point.
+**Key decisions:** Standalone `tsconfig.json` (not extending base) because base uses `module: ESNext/bundler` which conflicts with CommonJS CLI output; TypeScript 4.1+ shebang preservation means `#!/usr/bin/env node` at top of `src/index.ts` survives compilation unchanged; `DS_GEN_API_URL` env var is essential for Playwright test which passes `http://localhost:3001` when running `execSync`.
+**Session:** 2026-05-07

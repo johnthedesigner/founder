@@ -77,14 +77,26 @@ function TokenSection({ title, summary, tokens, rawJson }: SectionProps) {
             </pre>
           ) : (
             <div className="max-h-48 overflow-y-auto divide-y divide-gray-50">
-              {tokens.map(([name, value]) => (
-                <div key={name} className="flex items-center justify-between px-4 py-1.5">
-                  <span className="text-xs font-mono text-gray-600">{name}</span>
-                  <span className="text-xs text-gray-400 font-mono max-w-[140px] truncate text-right">
-                    {value}
-                  </span>
-                </div>
-              ))}
+              {tokens.map(([name, value]) => {
+                const isHex = /^#[0-9a-fA-F]{6}$/.test(value)
+                return (
+                  <div key={name} className="flex items-center justify-between px-4 py-1.5">
+                    <span className="text-xs font-mono text-gray-600">{name}</span>
+                    <div className="flex items-center gap-1.5">
+                      {isHex && (
+                        <span
+                          className="inline-block h-3 w-3 rounded-full border border-black/10 shrink-0"
+                          style={{ backgroundColor: value }}
+                          aria-hidden
+                        />
+                      )}
+                      <span className="text-xs text-gray-400 font-mono max-w-[120px] truncate text-right">
+                        {value}
+                      </span>
+                    </div>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
@@ -126,6 +138,9 @@ export function Stage3TokenSummary() {
   const compNames = Object.keys(component).length
 
   const primTokens: [string, string][] = [
+    ...Object.entries(primitives.colors).flatMap(([scaleName, scale]) =>
+      Object.entries(scale).map(([shade, value]) => [`color.${scaleName}.${shade}`, value] as [string, string]),
+    ),
     ...Object.entries(primitives.spacing).map(([k, v]) => [`spacing.${k}`, v] as [string, string]),
     ...Object.entries(primitives.radii).map(([k, v]) => [`radii.${k}`, v] as [string, string]),
     ...Object.entries(primitives.shadows).map(([k, v]) => [`shadows.${k}`, v] as [string, string]),

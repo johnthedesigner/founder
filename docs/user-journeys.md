@@ -29,8 +29,9 @@ The core product flow for a new user with no account and no existing brand asset
 
 | Step | Action | Expected result |
 |---|---|---|
-| 1.1.1 | Navigate to the app for the first time | Creation flow loads with Stage 1 visible; System Preview shows a default design system immediately |
-| 1.1.2 | Observe the default state | SaaS / Web App is pre-selected; scope chips show 6 categories; System Preview shows components styled with a blue primary and cool gray neutrals |
+| 1.1.1 | Navigate to the app for the first time (unauthenticated) | Landing page loads with headline, "Start for free" CTA (→ `/new`), and "Sign in" link; authenticated users are immediately redirected to `/projects` |
+| 1.1.2 | Click "Start for free" | Creation flow loads at `/new` with Stage 1 visible; System Preview shows a default design system immediately |
+| 1.1.3 | Observe the default state | SaaS / Web App is pre-selected; scope chips show 6 categories; System Preview shows components styled with a blue primary and cool gray neutrals |
 
 ### 1.2 — Stage 1: Foundation
 
@@ -41,9 +42,12 @@ The core product flow for a new user with no account and no existing brand asset
 | 1.2.3 | Click "Customize" below the scope chips | Checklist expands showing all 6 category toggles |
 | 1.2.4 | Uncheck "Overlays" | Overlays chip disappears from the summary row |
 | 1.2.5 | Re-check "Overlays" | Overlays chip reappears |
-| 1.2.6 | Select "Starting fresh" (default) and choose "Warm & Approachable" color direction | System Preview primary color shifts to an amber/orange hue |
-| 1.2.7 | Select "Both" for light/dark mode | System Preview shows a mode toggle in its header |
-| 1.2.8 | Click "Continue" | Stage 2 becomes active |
+| 1.2.6 | Select a palette preset tile (e.g. "Forest & Gold") | Tile gets a selection ring; primary, secondary, and accent hex fields update to the preset's values; System Preview primary color shifts immediately |
+| 1.2.7 | Select the "Custom" palette tile and enter a primary hex value in the hex field | Hex field accepts input; color picker swatch updates to match; System Preview updates within 500ms |
+| 1.2.8 | Enable the Secondary color row via its checkbox | Secondary row expands with its own picker and hex field; entering a value updates the preview |
+| 1.2.9 | Observe the Status colors row | Chips for Error, Warning, Success, Info show active/inactive state based on the selected project type (SaaS → 4 active; Marketing → Error only) |
+| 1.2.10 | Select "Both" for light/dark mode | System Preview shows a mode toggle in its header |
+| 1.2.11 | Click "Continue" | Stage 2 becomes active |
 
 ### 1.3 — Stage 2: Style
 
@@ -224,8 +228,11 @@ Update this table when adding or modifying Playwright tests.
 | 6.2.2–6.2.3 | `e2e/phase-1b.spec.ts` | register → claim prompt → claim → project in home grid | 1b |
 | 6.3.1 | `e2e/phase-1b.spec.ts` | clear localStorage → project URL read-only | 1b |
 | 1.1.1–1.1.2 | `e2e/phase-2.spec.ts` | default state: preview renders on load | 2 |
+| 1.1.1 | `e2e/phase-3b.spec.ts` | unauthenticated user sees landing; authenticated redirected to /projects | 3b |
 | 1.2.1 | `e2e/phase-2.spec.ts` | project type change updates scope chips | 2 |
-| 1.2.6 | `e2e/phase-2.spec.ts` | color direction change updates preview | 2 |
+| 1.2.6 | `e2e/phase-3b.spec.ts` | preset palette selection updates config and preview | 3b |
+| 1.2.7–1.2.8 | `e2e/phase-3b.spec.ts` | custom color pickers sync with hex fields | 3b |
+| 1.2.9 | `e2e/phase-3b.spec.ts` | functional color chips reflect active roles per project type | 3b |
 | 1.3.2–1.3.5 | `e2e/phase-2.spec.ts` | personality axis changes update preview within 500ms | 2 |
 | 1.5.2–1.5.3 | `e2e/phase-2.spec.ts` | download ZIP → valid contents | 2 |
 | 3.1.1–3.1.5 | `e2e/phase-3.spec.ts` | complete flow → create account → project saved → reload → in home grid | 3 |
@@ -262,6 +269,7 @@ Update this table when adding or modifying Playwright tests.
 
 **Journey 4:**
 - 4.1.1–4.1.5 — ZIP-based integration _(manual verification; no Playwright test)_
+- 4.2.1–4.2.2 — Settings page token reveal/copy _(manual verification; no Playwright test)_
 - 4.3.1–4.3.4 — Figma integration guide _(manual verification; external tool)_
 
 **Journey 5:**

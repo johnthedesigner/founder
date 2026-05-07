@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import type { Request, Response } from 'express'
+import { rateLimit } from 'express-rate-limit'
 import type { ProjectConfig } from '@ds-gen/types'
 import { optionalAuth } from '../middleware/auth'
 import { cliAuth } from '../middleware/cliAuth'
@@ -12,6 +13,38 @@ export const projectExportRouter = Router()
 export const agentRouter = Router()
 
 projectExportRouter.use(optionalAuth)
+
+// ---- spec cache ----
+
+const CACHE_TTL_MS = 60_000
+
+interface SpecCacheEntry {
+  spec: object
+  cachedAt: number
+}
+
+const specCache = new Map<string, SpecCacheEntry>()
+
+export function invalidateSpecCache(projectId: string): void {
+  specCache.delete(projectId)
+}
+
+export function clearSpecCache(): void {
+  specCache.clear()
+}
+
+// ---- rate limiter ----
+
+export const specRateLimiter = rateLimit({
+  windowMs: 60_000,
+  max: 60,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => !!(req as Request).user,
+  message: { error: 'Too many requests, please try again in a minute' },
+})
+
+// ---- helpers ----
 
 function resolveEditAuth(req: Request): { userId?: string; ownerToken?: string } | null {
   const userId = req.user?.id
@@ -62,9 +95,17 @@ projectExportRouter.get('/:id/export.zip', async (req: Request, res: Response) =
   void updateProject(result.id, { lastExportedAt: new Date() })
 })
 
-// GET /api/v1/systems/:projectId/spec (no auth)
-agentRouter.get('/:projectId/spec', async (req: Request, res: Response) => {
-  const project = await findProjectById(req.params.projectId!)
+// GET /api/v1/systems/:projectId/spec (no auth required; rate limited; cached)
+agentRouter.get('/:projectId/spec', optionalAuth, specRateLimiter, async (req: Request, res: Response) => {
+  const projectId = req.params.projectId!
+
+  const cached = specCache.get(projectId)
+  if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) {
+    res.json(cached.spec)
+    return
+  }
+
+  const project = await findProjectById(projectId)
   if (!project) {
     res.status(404).json({ error: 'Project not found' })
     return
@@ -76,7 +117,10 @@ agentRouter.get('/:projectId/spec', async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Agent spec not generated' })
     return
   }
-  res.json(JSON.parse(specFile.content))
+
+  const spec = JSON.parse(specFile.content) as object
+  specCache.set(projectId, { spec, cachedAt: Date.now() })
+  res.json(spec)
 })
 
 // GET /api/v1/systems/:projectId/manifest (CLI auth)

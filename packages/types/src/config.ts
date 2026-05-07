@@ -17,7 +17,8 @@ export type Personality = 'professional' | 'approachable' | 'bold' | 'minimal'
 export type TypeStyle = 'geometric' | 'humanist' | 'serif-accented' | 'monospace-accented'
 export type Dimensionality = 'flat' | 'subtle' | 'dimensional'
 
-export type ColorSource = 'provided' | 'generated'
+export type ColorSource = 'provided' | 'generated' | 'preset'
+export type FunctionalColorRole = 'error' | 'warning' | 'success' | 'info'
 export type ColorDirection =
   | 'cool-professional'
   | 'warm-approachable'
@@ -25,12 +26,19 @@ export type ColorDirection =
   | 'neutral-minimal'
   | 'earth-tones'
 
+export interface FunctionalColorsConfig {
+  enabled: FunctionalColorRole[]
+  overrides?: Partial<Record<FunctionalColorRole, string>>
+}
+
 export interface ColorConfig {
   source: ColorSource
   primaryHex: string
   secondaryHex?: string
   accentHex?: string
   colorDirection?: ColorDirection
+  paletteId?: string
+  functionalColors?: FunctionalColorsConfig
   neutralFamily: 'gray' | 'slate' | 'zinc' | 'stone' | 'warm-gray'
 }
 
@@ -88,7 +96,8 @@ export const TypeStyleSchema = z.enum([
 
 export const DimensionalitySchema = z.enum(['flat', 'subtle', 'dimensional'])
 
-export const ColorSourceSchema = z.enum(['provided', 'generated'])
+export const ColorSourceSchema = z.enum(['provided', 'generated', 'preset'])
+export const FunctionalColorRoleSchema = z.enum(['error', 'warning', 'success', 'info'])
 
 export const ColorDirectionSchema = z.enum([
   'cool-professional',
@@ -97,6 +106,18 @@ export const ColorDirectionSchema = z.enum([
   'neutral-minimal',
   'earth-tones',
 ])
+
+export const FunctionalColorsConfigSchema = z.object({
+  enabled: z.array(FunctionalColorRoleSchema),
+  overrides: z
+    .object({
+      error: z.string().regex(hexColorRegex).optional(),
+      warning: z.string().regex(hexColorRegex).optional(),
+      success: z.string().regex(hexColorRegex).optional(),
+      info: z.string().regex(hexColorRegex).optional(),
+    })
+    .optional(),
+})
 
 export const ColorConfigSchema = z.object({
   source: ColorSourceSchema,
@@ -110,6 +131,8 @@ export const ColorConfigSchema = z.object({
     .regex(hexColorRegex, 'accentHex must be a 6-digit hex color')
     .optional(),
   colorDirection: ColorDirectionSchema.optional(),
+  paletteId: z.string().optional(),
+  functionalColors: FunctionalColorsConfigSchema.optional(),
   neutralFamily: z.enum(['gray', 'slate', 'zinc', 'stone', 'warm-gray']),
 })
 

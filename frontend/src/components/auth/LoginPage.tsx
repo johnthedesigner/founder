@@ -26,7 +26,7 @@ export function LoginPage() {
       if (anonymousEntries.length > 0) {
         setShowClaim(true)
       } else {
-        void navigate('/')
+        void navigate('/projects')
       }
     } catch (err) {
       if (err instanceof ApiResponseError) {

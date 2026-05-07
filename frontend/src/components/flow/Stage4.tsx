@@ -84,6 +84,7 @@ export function Stage4() {
   const [error, setError] = useState<string | null>(null)
   const [copied, setCopied] = useState(false)
   const [cliCopied, setCliCopied] = useState(false)
+  const [agentCopied, setAgentCopied] = useState(false)
   const [showFigma, setShowFigma] = useState(false)
 
   const shareUrl = savedProjectId
@@ -92,6 +93,10 @@ export function Stage4() {
 
   const cliCommand = savedProjectId
     ? `npx @ds-gen/cli init --project=${savedProjectId}`
+    : null
+
+  const agentApiUrl = savedProjectId
+    ? `${window.location.origin}/api/v1/systems/${savedProjectId}/spec`
     : null
 
   async function ensureSaved(): Promise<string> {
@@ -138,6 +143,13 @@ export function Stage4() {
     void navigator.clipboard.writeText(cliCommand)
     setCliCopied(true)
     setTimeout(() => setCliCopied(false), 2000)
+  }
+
+  function handleCopyAgent() {
+    if (!agentApiUrl) return
+    void navigator.clipboard.writeText(agentApiUrl)
+    setAgentCopied(true)
+    setTimeout(() => setAgentCopied(false), 2000)
   }
 
   return (
@@ -216,6 +228,30 @@ export function Stage4() {
             Requires an account — sign in to use the CLI
           </p>
         </div>
+
+        {/* Agent API */}
+        {agentApiUrl && (
+          <div className="rounded-lg border border-gray-200 bg-white p-4">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-gray-800">Agent API</span>
+              <span className="text-xs text-gray-400">Public · JSON spec</span>
+            </div>
+            <div className="flex items-center gap-2 rounded-md bg-gray-900 px-3 py-2">
+              <code className="flex-1 text-xs text-green-400 font-mono break-all">
+                {agentApiUrl}
+              </code>
+              <button
+                onClick={handleCopyAgent}
+                className="shrink-0 text-xs text-gray-400 hover:text-white"
+              >
+                {agentCopied ? '✓' : 'Copy'}
+              </button>
+            </div>
+            <p className="mt-1.5 text-xs text-gray-400">
+              Use with AI coding agents — no auth required, 60 req/min rate limit
+            </p>
+          </div>
+        )}
 
         {/* Figma setup */}
         <button

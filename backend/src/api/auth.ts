@@ -10,6 +10,8 @@ import {
   forgotPassword,
   resetPassword,
   issueCliToken,
+  getCliToken,
+  revokeCliToken,
 } from '../services/auth'
 
 export const authRouter = Router()
@@ -136,10 +138,22 @@ authRouter.post('/forgot-password', async (req: Request, res: Response) => {
   res.json({ message: 'If that email exists, a reset link has been sent' })
 })
 
-// POST /auth/cli-token
+// POST /auth/cli-token (kept for backward compat — always issues a new token)
 authRouter.post('/cli-token', requireAuth, async (req: Request, res: Response) => {
   const token = await issueCliToken(req.user!.id)
   res.json({ token })
+})
+
+// GET /auth/cli-token — returns existing CLI token or issues one if none exists
+authRouter.get('/cli-token', requireAuth, async (req: Request, res: Response) => {
+  const token = await getCliToken(req.user!.id)
+  res.json({ token })
+})
+
+// DELETE /auth/cli-token — revokes the CLI session; client should re-fetch to get a new one
+authRouter.delete('/cli-token', requireAuth, async (req: Request, res: Response) => {
+  await revokeCliToken(req.user!.id)
+  res.status(204).end()
 })
 
 // POST /auth/reset-password
